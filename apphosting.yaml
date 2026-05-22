@@ -1,0 +1,3 @@
+kind: "apphosting"
+schemaVersion: "v1"
+# No se requiere configuración adicional para HTML puro
