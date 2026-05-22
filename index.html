@@ -3,236 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo de Calcomanías - Admin URL</title>
+    <title>Tienda de Calcomanías del Mundial</title>
     <style>
         :root {
-            --primary: #8a1538; /* Guinda Mundialista */
-            --disponible: #28a745;
-            --vendida: #dc3545;
+            --primary: #8a1538; 
+            --accent: #dfac12; 
+            --dark: #2c2c2c;
+            --light: #f4f4f4;
         }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background-color: #f4f4f4; padding: 20px; }
-        header { background-color: var(--primary); color: white; padding: 20px; text-align: center; border-radius: 10px; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .container { max-width: 1200px; margin: 0 auto; }
-        
-        /* Botón de acceso Admin */
-        #btnAdminMode { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        
-        /* Panel de Administración */
-        .admin-panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin: 30px 0; display: none; border-left: 5px solid var(--primary); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        .btn-save { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; transition: 0.3s; }
-        .btn-save:hover { background: #5a0e25; }
 
-        /* Cuadrícula de Calcomanías */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; margin-top: 30px; }
-        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; transition: transform 0.2s; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--light); color: var(--dark);
+        }
+
+        header {
+            background-color: var(--primary); color: white;
+            text-align: center; padding: 2rem; position: relative;
+        }
+
+        header h1 { margin: 0; font-size: 2.5rem; }
+        header p { margin: 5px 0 0 0; color: var(--accent); font-weight: bold; }
+
+        .admin-btn {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(255,255,255,0.2); color: white;
+            border: 1px solid white; padding: 8px 15px;
+            cursor: pointer; border-radius: 5px;
+        }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: white; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.3s;
+            display: flex; flex-direction: column;
+        }
         .card:hover { transform: translateY(-5px); }
-        .card img { width: 100%; height: 220px; object-fit: cover; background: #eee; }
-        .card-body { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
-        .card-title { font-size: 1.3rem; margin: 0 0 10px 0; color: #222; }
-        .card-price { font-size: 1.5rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; }
+
+        .card img { width: 100%; height: 250px; object-fit: cover; background-color: #eee; }
+
+        .card-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+
+        .card-title { font-size: 1.4rem; margin: 0 0 10px 0; color: var(--primary); }
+        .card-desc { font-size: 0.9rem; color: #666; flex-grow: 1; margin-bottom: 15px; }
         
-        .badge { padding: 5px 10px; border-radius: 20px; color: white; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; align-self: flex-start; margin-bottom: 10px; }
-        .disponible { background: var(--disponible); }
-        .vendida { background: var(--vendida); }
+        .status {
+            display: inline-block; padding: 5px 10px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: bold; margin-bottom: 15px; width: fit-content;
+        }
+        .instock { background: #e6f4ea; color: #137333; }
+        .outstock { background: #fce8e6; color: #c5221f; }
 
-        .btn-wa { display: block; background: #25D366; color: white; text-align: center; padding: 12px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: auto; }
-        .btn-wa.disabled { background: #ccc; pointer-events: none; }
+        .price { font-size: 1.6rem; font-weight: bold; color: var(--dark); margin-bottom: 15px; }
 
-        .admin-tools { display: none; background: #f9f9f9; padding: 10px; justify-content: space-around; border-top: 1px solid #eee; }
-        .btn-edit { background: #ffc107; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .whatsapp-btn {
+            background-color: #25D366; color: white; text-align: center;
+            padding: 12px; text-decoration: none; border-radius: 8px;
+            font-weight: bold; display: flex; align-items: center;
+            justify-content: center; gap: 10px; transition: background 0.3s;
+        }
+        .whatsapp-btn:hover { background-color: #1ebd58; }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); justify-content: center;
+            align-items: center; z-index: 1000;
+        }
+
+        .modal-content {
+            background: white; padding: 30px; border-radius: 12px;
+            width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+        }
+
+        .modal h2 { margin-top: 0; color: var(--primary); }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;
+        }
+
+        .btn-block { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;}
+        .btn-success { background: var(--primary); color: white; }
+        .btn-danger { background: #c5221f; color: white; }
+
+        .admin-list { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        .admin-list th, .admin-list td { padding: 10px; border: 1px solid #ddd; text-align: left; font-size: 0.9rem;}
+        .admin-list th { background: #f4f4f4; }
+        
+        .loading { text-align: center; font-size: 1.5rem; color: #666; margin-top: 50px; }
     </style>
+</head>
+<body>
+
+    <header>
+        <h1>Mundial Sticker Shop</h1>
+        <p>¡Completa tu álbum con nosotros!</p>
+        <button class="admin-btn" onclick="toggleModal(true)">⚙️ Administrar</button>
+    </header>
+
+    <div class="container">
+        <div id="catalog" class="grid">
+            <p class="loading">Cargando calcomanías desde la nube...</p>
+        </div>
+    </div>
+
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <h2>Panel de Control</h2>
+            <form id="stickerForm">
+                <div class="form-group">
+                    <label>Nombre de la Calcomanía / Jugador</label>
+                    <input type="text" id="title" required placeholder="Ej: Lionel Messi - Oro">
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="desc" rows="2" placeholder="Ej: Sticker número 14 del álbum en perfecto estado."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>URL de la Imagen</label>
+                    <input type="url" id="imgUrl" required placeholder="https://enlace-de-tu-imagen.com/foto.jpg">
+                </div>
+                <div class="form-group">
+                    <label>Precio</label>
+                    <input type="text" id="price" required placeholder="Ej: $5.00">
+                </div>
+                <div class="form-group">
+                    <label>Disponibilidad</label>
+                    <select id="status">
+                        <option value="true">Disponible</option>
+                        <option value="false">Agotado</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-block btn-success">Guardar en la Nube</button>
+            </form>
+
+            <hr style="margin: 20px 0;">
+            <h3>Inventario en Firebase</h3>
+            <table class="admin-list">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="adminTableBody"></tbody>
+            </table>
+
+            <button class="btn-block btn-danger" onclick="toggleModal(false)" style="background: #666; margin-top: 15px;">Cerrar Panel</button>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // CONFIGURACIÓN DE FIREBASE (Copia tus datos aquí)
+        // CONFIGURACIÓN DE TU PROYECTO (PEGA TU PROPIO CÓDIGO AQUÍ)
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
             projectId: "calcos-6760b",
-            storageBucket: calcos-6760b.firebasestorage.app",
+            storageBucket: "calcos-6760b.firebasestorage.app",
             messagingSenderId: "20210064860",
             appId: "1:20210064860:web:01db78b92e3b0d43400319"
         };
 
+        // Inicializar Firebase y Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
-        const WHATSAPP_NUM = "50250103703"; // Tu número de WhatsApp aquí
+        const stickersCollection = collection(db, "stickers");
 
-        let editID = null;
+        // CONFIGURACIÓN DE TU WHATSAPP
+        const WHATSAPP_NUMBER = "50250103703"; // Cambia por tu número real con código de país
 
- window.addEventListener('DOMContentLoaded', () => {
-            const catalog = document.getElementById('catalog');
-            const adminPanel = document.getElementById('adminPanel');
-            const btnAdminMode = document.getElementById('btnAdminMode');
-            const form = document.getElementById('stickerForm');
-      
-        // Cargar datos en tiempo real de Firestore
-        onSnapshot(collection(db, "calcomanias"), (snapshot) => {
-             catalog.innerHTML = "";
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const id = docSnap.id;
-const card = document.createElement('div');
-                    card.className = 'card';
-                    
-                    // Configurar el botón de WhatsApp con texto dinámico
-                    const mensajeWa = encodeURIComponent(`Hola, me interesa la calcomanía "${data.nombre}" que tienes en venta.`);
-                    const urlWa = `https://wa.me/${WHATSAPP_NUMERO}?text=${mensajeWa}`;
-                    
-                    card.innerHTML = `
-                        <img src="${data.imagenUrl || 'https://via.placeholder.com/250'}" alt="${data.nombre}">
-                    
-              <div class="card-content"
-                        <span class="badge ${item.estado}">${item.estado}</span>
-                        <h3 class="card-title">${item.nombre}</h3>
-                        <p style="color: #666; font-size: 0.9rem;">${item.descripcion}</p>
-                        <div class="card-price">Q${item.precio}</div>
-                        <a href="${urlWa}" target="_blank" class="btn-whatsapp ${data.estado === 'vendida' ? 'disabled' : ''}">
-                                ${data.estado === 'vendida' ? 'No disponible' : 'Apartar por WhatsApp'}
+        // Elementos del DOM
+        const catalog = document.getElementById('catalog');
+        const stickerForm = document.getElementById('stickerForm');
+        const adminTableBody = document.getElementById('adminTableBody');
+        const modal = document.getElementById('adminModal');
 
-                       <div class="admin-actions" style="display: ${auth.currentUser ? 'flex' : 'none'}">
-                            <button class="btn-edit" onclick="cargarParaEditar('${id}', '${data.nombre}', '${data.descripcion}', '${data.precio}', '${data.estado}')">Editar</button>
-                            <button class="btn-delete" onclick="eliminarSticker('${id}')">Eliminar</button>
-                        </div>
-                    `;
-                    catalog.appendChild(card);
+        // Escuchar cambios en tiempo real en la base de datos de Firebase
+        onSnapshot(stickersCollection, (snapshot) => {
+            catalog.innerHTML = '';
+            adminTableBody.innerHTML = '';
+
+            if(snapshot.empty) {
+                catalog.innerHTML = '<p class="loading">No hay calcomanías disponibles por ahora.</p>';
+                return;
+            }
+
+            snapshot.forEach((documento) => {
+                const sticker = documento.data();
+                const id = documento.id; // ID único de Firebase
+
+                // 1. Renderizar en la Tienda Pública
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                const statusClass = sticker.status ? 'instock' : 'outstock';
+                const statusText = sticker.status ? 'Disponible' : 'Agotado';
+                
+                const wpMessage = encodeURIComponent(`Hola, estoy interesado en la calcomanía de *${sticker.title}* por ${sticker.price}. ¿Sigue disponible?`);
+                const wpLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${wpMessage}`;
+
+                card.innerHTML = `
+                    <img src="${sticker.imgUrl}" alt="${sticker.title}">
+                    <div class="card-content">
+                        <h3 class="card-title">${sticker.title}</h3>
+                        <p class="card-desc">${sticker.desc}</p>
+                        <span class="status ${statusClass}">${statusText}</span>
+                        <div class="price">${sticker.price}</div>
+                        ${sticker.status ? `<a href="${wpLink}" target="_blank" class="whatsapp-btn">💬 Comprar por WhatsApp</a>` : `<button class="whatsapp-btn" style="background:#ccc; cursor:not-allowed;" disabled>Agotado</button>`}
+                    </div>
+                `;
+                catalog.appendChild(card);
+
+                // 2. Renderizar en la lista del Panel de Administración
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${sticker.title}</td>
+                    <td><button class="delete-btn" data-id="${id}" style="background:#c5221f; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Eliminar</button></td>
+                `;
+                adminTableBody.appendChild(row);
+            });
+
+            // Asignar eventos de eliminación a los botones creados
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const docId = e.target.getAttribute('data-id');
+                    if(confirm("¿Seguro que deseas eliminar esta calcomanía de la nube?")) {
+                        await deleteDoc(doc(db, "stickers", docId));
+                    }
                 });
             });
+        });
 
-            // Login básico para el administrador al dar clic en el botón oculto
-            btnAdminMode.addEventListener('click', () => {
-                if(auth.currentUser) {
-                    signOut(auth);
-                } else {
-                    const email = prompt("Correo del Administrador:");
-                    const password = prompt("Contraseña:");
-                    if(email && password) {
-                        signInWithEmailAndPassword(auth, email, password).catch(err => alert("Error de acceso: " + err.message));
-                    }
-                }
-            });
-
-            // Controlar el estado de autenticación
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    adminPanel.style.display = 'block';
-                    btnAdminMode.innerText = "Cerrar Sesión Admin";
-                    document.querySelectorAll('.admin-actions').forEach(el => el.style.display = 'flex');
-                } else {
-                    adminPanel.style.display = 'none';
-                    btnAdminMode.innerText = "Admin Log";
-                    document.querySelectorAll('.admin-actions').forEach(el => el.style.display = 'none');
-                }
-            });
-
-            // Guardar o Actualizar Calcomanía
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const nombre = document.getElementById('nombre').value;
-                const descripcion = document.getElementById('descripcion').value;
-                const precio = document.getElementById('precio').value;
-                const estado = document.getElementById('estado').value;
-                urlImagen: document.getElementById('urlImg').value // Guardamos la URL directamente
+        // Guardar Nueva Calcomanía en Firebase
+        stickerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const newSticker = {
+                title: document.getElementById('title').value,
+                desc: document.getElementById('desc').value,
+                imgUrl: document.getElementById('imgUrl').value,
+                price: document.getElementById('price').value,
+                status: document.getElementById('status').value === "true"
             };
 
             try {
-                if(editID) {
-                    await updateDoc(doc(db, "calcomanias", editID), data);
-                    editID = null;
-                    document.getElementById('formTitle').innerText = "Nueva Calcomanía";
-                } else {
-                    await addDoc(collection(db, "calcomanias"), data);
-                }
-                e.target.reset();
-                alert("Guardado correctamente");
+                await addDoc(stickersCollection, newSticker);
+                stickerForm.reset();
+                window.toggleModal(false); // Cerrar panel al guardar
             } catch (error) {
-                alert("Error al guardar: " + error.message);
+                alert("Error al guardar en Firebase: " + error.message);
             }
-        };
-
-        // Sistema de Login Admin
-        document.getElementById('btnAdminMode').onclick = () => {
-            if(auth.currentUser) { signOut(auth); } 
-            else {
-                const email = prompt("Email de Administrador:");
-                const pass = prompt("Contraseña:");
-                if(email && pass) signInWithEmailAndPassword(auth, email, pass).catch(e => alert("Error: " + e.message));
-            }
-        };
-
-        onAuthStateChanged(auth, user => {
-            document.getElementById('adminPanel').style.display = user ? 'block' : 'none';
-            document.getElementById('btnAdminMode').innerText = user ? 'Salir Admin' : 'Admin Login';
         });
 
-        // Funciones Globales para los botones de las tarjetas
-        window.eliminar = async (id) => { 
-            if(confirm("¿Estás seguro de que quieres eliminar esta calcomanía?")) await deleteDoc(doc(db, "calcomanias", id)); 
-        };
-
-        window.prepararEdicion = (id, n, d, p, e, u) => {
-            editID = id;
-            document.getElementById('nombre').value = n;
-            document.getElementById('desc').value = d;
-            document.getElementById('precio').value = p;
-            document.getElementById('estado').value = e;
-            document.getElementById('urlImg').value = u;
-            document.getElementById('formTitle').innerText = "Editando: " + n;
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        };
+        // Funciones globales para abrir y cerrar el modal
+        window.toggleModal = function(show) {
+            modal.style.display = show ? 'flex' : 'none';
+        }
     </script>
-</head>
-<body>
-
-<header>
-    <h1>Álbum Mundial - Mi Catálogo</h1>
-    <button id="btnAdminMode">Admin Login</button>
-</header>
-
-<div class="container">
-    <div class="admin-panel" id="adminPanel">
-        <h2 id="formTitle">Nueva Calcomanía</h2>
-        <form id="formCalco">
-            <div class="form-group">
-                <label>Nombre de la Calcomanía / Jugador</label>
-                <input type="text" id="nombre" required placeholder="Ej: Lionel Messi - ARG 10">
-            </div>
-            <div class="form-group">
-                <label>Descripción</label>
-                <textarea id="desc" rows="2" placeholder="Detalles de la calcomanía..."></textarea>
-            </div>
-            <div class="form-group">
-                <label>Precio (Q)</label>
-                <input type="number" step="0.01" id="precio" required placeholder="0.00">
-            </div>
-            <div class="form-group">
-                <label>Estado</label>
-                <select id="estado">
-                    <option value="disponible">Disponible</option>
-                    <option value="vendida">Vendida</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>URL de la Imagen (Pega el link aquí)</label>
-                <input type="url" id="urlImg" placeholder="https://ejemplo.com/imagen.jpg">
-                <small style="color: #666;">Puedes usar enlaces de Google Photos, Pinterest o cualquier servidor de imágenes.</small>
-            </div>
-            <button type="submit" class="btn-save">Guardar Información</button>
-        </form>
-    </div>
-
-    <div class="grid" id="grid">
-        </div>
-</div>
-
 </body>
 </html>
