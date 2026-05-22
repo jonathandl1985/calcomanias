@@ -48,7 +48,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         // CONFIGURACIÓN DE FIREBASE (Copia tus datos aquí)
@@ -68,47 +69,78 @@
 
         let editID = null;
 
+ window.addEventListener('DOMContentLoaded', () => {
+            const catalog = document.getElementById('catalog');
+            const adminPanel = document.getElementById('adminPanel');
+            const btnAdminMode = document.getElementById('btnAdminMode');
+            const form = document.getElementById('stickerForm');
+      
         // Cargar datos en tiempo real de Firestore
         onSnapshot(collection(db, "calcomanias"), (snapshot) => {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = "";
-            snapshot.forEach(d => {
-                const item = d.data();
-                const id = d.id;
-                const esVendida = item.estado === 'vendida';
-                
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <img src="${item.urlImagen || 'https://via.placeholder.com/300x200?text=Sin+Imagen'}" alt="${item.nombre}">
-                    <div class="card-body">
+             catalog.innerHTML = "";
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const id = docSnap.id;
+const card = document.createElement('div');
+                    card.className = 'card';
+                    
+                    // Configurar el botón de WhatsApp con texto dinámico
+                    const mensajeWa = encodeURIComponent(`Hola, me interesa la calcomanía "${data.nombre}" que tienes en venta.`);
+                    const urlWa = `https://wa.me/${WHATSAPP_NUMERO}?text=${mensajeWa}`;
+                    
+                    card.innerHTML = `
+                        <img src="${data.imagenUrl || 'https://via.placeholder.com/250'}" alt="${data.nombre}">
+                    
+              <div class="card-content"
                         <span class="badge ${item.estado}">${item.estado}</span>
                         <h3 class="card-title">${item.nombre}</h3>
                         <p style="color: #666; font-size: 0.9rem;">${item.descripcion}</p>
                         <div class="card-price">Q${item.precio}</div>
-                        <a href="https://wa.me/${WHATSAPP_NUM}?text=Hola, me interesa la calcomanía: ${item.nombre}" target="_blank" class="btn-wa ${esVendida ? 'disabled' : ''}">
-                            ${esVendida ? 'AGOTADA' : 'Pedir por WhatsApp'}
-                        </a>
-                    </div>
-                    <div class="admin-tools" id="tools-${id}">
-                        <button class="btn-edit" onclick="prepararEdicion('${id}', '${item.nombre}', '${item.descripcion}', '${item.precio}', '${item.estado}', '${item.urlImagen}')">Editar</button>
-                        <button class="btn-delete" onclick="eliminar('${id}')">Borrar</button>
-                    </div>
-                `;
-                grid.appendChild(card);
-                // Mostrar herramientas solo si hay admin logueado
-                if(auth.currentUser) document.getElementById(`tools-${id}`).style.display = 'flex';
-            });
-        });
+                        <a href="${urlWa}" target="_blank" class="btn-whatsapp ${data.estado === 'vendida' ? 'disabled' : ''}">
+                                ${data.estado === 'vendida' ? 'No disponible' : 'Apartar por WhatsApp'}
 
-        // Guardar o Actualizar Datos
-        document.getElementById('formCalco').onsubmit = async (e) => {
-            e.preventDefault();
-            const data = {
-                nombre: document.getElementById('nombre').value,
-                descripcion: document.getElementById('desc').value,
-                precio: document.getElementById('precio').value,
-                estado: document.getElementById('estado').value,
+                       <div class="admin-actions" style="display: ${auth.currentUser ? 'flex' : 'none'}">
+                            <button class="btn-edit" onclick="cargarParaEditar('${id}', '${data.nombre}', '${data.descripcion}', '${data.precio}', '${data.estado}')">Editar</button>
+                            <button class="btn-delete" onclick="eliminarSticker('${id}')">Eliminar</button>
+                        </div>
+                    `;
+                    catalog.appendChild(card);
+                });
+            });
+
+            // Login básico para el administrador al dar clic en el botón oculto
+            btnAdminMode.addEventListener('click', () => {
+                if(auth.currentUser) {
+                    signOut(auth);
+                } else {
+                    const email = prompt("Correo del Administrador:");
+                    const password = prompt("Contraseña:");
+                    if(email && password) {
+                        signInWithEmailAndPassword(auth, email, password).catch(err => alert("Error de acceso: " + err.message));
+                    }
+                }
+            });
+
+            // Controlar el estado de autenticación
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    adminPanel.style.display = 'block';
+                    btnAdminMode.innerText = "Cerrar Sesión Admin";
+                    document.querySelectorAll('.admin-actions').forEach(el => el.style.display = 'flex');
+                } else {
+                    adminPanel.style.display = 'none';
+                    btnAdminMode.innerText = "Admin Log";
+                    document.querySelectorAll('.admin-actions').forEach(el => el.style.display = 'none');
+                }
+            });
+
+            // Guardar o Actualizar Calcomanía
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const nombre = document.getElementById('nombre').value;
+                const descripcion = document.getElementById('descripcion').value;
+                const precio = document.getElementById('precio').value;
+                const estado = document.getElementById('estado').value;
                 urlImagen: document.getElementById('urlImg').value // Guardamos la URL directamente
             };
 
