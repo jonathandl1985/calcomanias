@@ -3,72 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo de Calcomanías</title>
+    <title>Catálogo de Calcomanías - Admin</title>
     <style>
-        :root { --primary: #8a1538; --disponible: #28a745; --vendida: #dc3545; }
-        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
-        .card img { width: 100%; height: 200px; object-fit: cover; }
-        .content { padding: 15px; flex-grow: 1; }
-        .price { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; color: white; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px; }
+        :root {
+            --primary: #8a1538;
+            --disponible: #28a745;
+            --vendida: #dc3545;
+        }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f7f7f7; padding: 20px; }
+        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; border-radius: 8px; position: relative; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        
+        /* Botón Admin */
+        #btnAdminMode { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        
+        /* Panel Admin */
+        .admin-panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin: 20px 0; display: none; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
+
+        /* Cuadrícula de Calcomanías */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; border: 1px solid #eee; }
+        .card img { width: 100%; height: 200px; object-fit: cover; background: #eee; }
+        .card-body { padding: 15px; flex-grow: 1; }
+        .card-price { font-size: 1.4rem; font-weight: bold; color: var(--primary); margin: 10px 0; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
         .disponible { background: var(--disponible); }
         .vendida { background: var(--vendida); }
-        .btn-wa { display: block; background: #25D366; color: white; text-align: center; padding: 10px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
+
+        .btn-wa { display: block; background: #25D366; color: white; text-align: center; padding: 10px; text-decoration: none; border-radius: 5px; font-weight: bold; }
         .btn-wa.disabled { background: #ccc; pointer-events: none; }
+
+        .admin-tools { display: none; background: #f0f0f0; padding: 10px; justify-content: space-around; }
+        .btn-edit { background: #ffc107; border: none; padding: 5px; cursor: pointer; border-radius: 3px; }
+        .btn-delete { background: #ff4444; color: white; border: none; padding: 5px; cursor: pointer; border-radius: 3px; }
     </style>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
+            authDomain: "calcos-6760b.firebaseapp.com",
+            projectId: "calcos-6760b",
+            storageBucket: calcos-6760b.firebasestorage.app",
+            messagingSenderId: "20210064860",
+            appId: "1:20210064860:web:01db78b92e3b0d43400319"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const WHATSAPP_NUM = "50250103703"; // Tu número aquí
+
+        let editID = null;
+
+        // Cargar datos en tiempo real
+        onSnapshot(collection(db, "calcomanias"), (snapshot) => {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = "";
+            snapshot.forEach(d => {
+                const item = d.data();
+                const id = d.id;
+                const esVendida = item.estado === 'vendida';
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <img src="${item.urlImagen || 'https://via.placeholder.com/200'}" alt="${item.nombre}">
+                    <div class="card-body">
+                        <span class="badge ${item.estado}">${item.estado}</span>
+                        <h3>${item.nombre}</h3>
+                        <p>${item.descripcion}</p>
+                        <div class="card-price">Q${item.precio}</div>
+                        <a href="https://wa.me/${WHATSAPP_NUM}?text=Me interesa: ${item.nombre}" target="_blank" class="btn-wa ${esVendida ? 'disabled' : ''}">
+                            ${esVendida ? 'VENDIDA' : 'Comprar por WhatsApp'}
+                        </a>
+                    </div>
+                    <div class="admin-tools" id="tools-${id}">
+                        <button class="btn-edit" onclick="prepararEdicion('${id}', '${item.nombre}', '${item.descripcion}', '${item.precio}', '${item.estado}', '${item.urlImagen}')">Editar</button>
+                        <button class="btn-delete" onclick="eliminar('${id}')">Borrar</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+                if(auth.currentUser) document.getElementById(`tools-${id}`).style.display = 'flex';
+            });
+        });
+
+        // Guardar o Editar
+        document.getElementById('formCalco').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                nombre: document.getElementById('nombre').value,
+                descripcion: document.getElementById('desc').value,
+                precio: document.getElementById('precio').value,
+                estado: document.getElementById('estado').value,
+                urlImagen: document.getElementById('urlImg').value
+            };
+
+            if(editID) {
+                await updateDoc(doc(db, "calcomanias", editID), data);
+                editID = null;
+                document.getElementById('formTitle').innerText = "Nueva Calcomanía";
+            } else {
+                await addDoc(collection(db, "calcomanias"), data);
+            }
+            e.target.reset();
+        };
+
+        // Autenticación
+        document.getElementById('btnAdminMode').onclick = () => {
+            if(auth.currentUser) { signOut(auth); } 
+            else {
+                const email = prompt("Email Admin:");
+                const pass = prompt("Password:");
+                if(email && pass) signInWithEmailAndPassword(auth, email, pass);
+            }
+        };
+
+        onAuthStateChanged(auth, user => {
+            document.getElementById('adminPanel').style.display = user ? 'block' : 'none';
+            document.getElementById('btnAdminMode').innerText = user ? 'Salir Admin' : 'Admin Login';
+        });
+
+        // Funciones Globales
+        window.eliminar = async (id) => { if(confirm("¿Borrar?")) await deleteDoc(doc(db, "calcomanias", id)); };
+        window.prepararEdicion = (id, n, d, p, e, u) => {
+            editID = id;
+            document.getElementById('nombre').value = n;
+            document.getElementById('desc').value = d;
+            document.getElementById('precio').value = p;
+            document.getElementById('estado').value = e;
+            document.getElementById('urlImg').value = u;
+            document.getElementById('formTitle').innerText = "Editando: " + n;
+            window.scrollTo(0,0);
+        };
+    </script>
 </head>
 <body>
 
 <header>
-    <h1>Mis Calcomanías del Mundial</h1>
-    <p>Actualizado desde Google Sheets</p>
+    <h1>Catálogo de Calcomanías</h1>
+    <button id="btnAdminMode">Admin Login</button>
 </header>
 
-<div class="grid" id="catalogo">
+<div class="container">
+    <div class="admin-panel" id="adminPanel">
+        <h2 id="formTitle">Nueva Calcomanía</h2>
+        <form id="formCalco">
+            <div class="form-group"><label>Nombre</label><input type="text" id="nombre" required></div>
+            <div class="form-group"><label>Descripción</label><textarea id="desc"></textarea></div>
+            <div class="form-group"><label>Precio (Q)</label><input type="number" step="0.01" id="precio" required></div>
+            <div class="form-group">
+                <label>Estado</label>
+                <select id="estado">
+                    <option value="disponible">Disponible</option>
+                    <option value="vendida">Vendida</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>URL de la Imagen (Link de la foto)</label>
+                <input type="url" id="urlImg" placeholder="https://ejemplo.com/foto.jpg">
+            </div>
+            <button type="submit" class="btn-save">Guardar Calcomanía</button>
+        </form>
     </div>
 
-<script>
-    // 1. PEGA AQUÍ TU ENLACE DE GOOGLE SHEETS PUBLICADO COMO CSV
-    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJQymlPdsNUtQuU0A8DKTBc8OxYlPH6MXX7eCnCh01cHLQt85-l82NCVCq7ElplpzUgXdp2bvzYTZn/pubhtml?gid=0&single=true'; 
-    const WHATSAPP_NUM = '50250103703'; // Tu número
+    <div class="grid" id="grid"></div>
+</div>
 
-    async function cargarCalcomanias() {
-        const respuesta = await fetch(SHEET_CSV_URL);
-        const data = await respuesta.text();
-        const filas = data.split('\n').slice(1); // Ignorar encabezado
-        const contenedor = document.getElementById('catalogo');
-
-        filas.forEach(fila => {
-            const cols = fila.split(',');
-            if (cols.length < 4) return;
-
-            const [nombre, desc, precio, estado, img] = cols;
-            const esVendida = estado.trim().toLowerCase() === 'vendida';
-            
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                <img src="${img.trim() || 'https://via.placeholder.com/200'}" alt="${nombre}">
-                <div class="content">
-                    <span class="badge ${esVendida ? 'vendida' : 'disponible'}">${estado}</span>
-                    <h3>${nombre}</h3>
-                    <p>${desc}</p>
-                    <div class="price">Q${precio}</div>
-                    <a href="https://wa.me/${WHATSAPP_NUM}?text=Hola, quiero la calcomanía: ${nombre}" 
-                       target="_blank" 
-                       class="btn-wa ${esVendida ? 'disabled' : ''}">
-                       ${esVendida ? 'AGOTADA' : 'Pedir por WhatsApp'}
-                    </a>
-                </div>
-            `;
-            contenedor.appendChild(card);
-        });
-    }
-
-    cargarCalcomanias();
-</script>
 </body>
 </html>
