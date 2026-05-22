@@ -53,10 +53,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             transition: border-color 0.3s;
         }
-
-        .search-bar:focus {
-            border-color: var(--primary);
-        }
+        .search-bar:focus { border-color: var(--primary); }
 
         /* Catálogo */
         .grid {
@@ -110,7 +107,7 @@
 
         .modal-content {
             background: white; padding: 30px; border-radius: 12px;
-            width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+            width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto;
         }
 
         .modal h2 { margin-top: 0; color: var(--primary); }
@@ -123,6 +120,7 @@
         .btn-block { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;}
         .btn-success { background: var(--primary); color: white; }
         .btn-danger { background: #c5221f; color: white; }
+        .btn-warn { background: var(--accent); color: var(--dark); }
 
         .admin-list { width: 100%; margin-top: 20px; border-collapse: collapse; }
         .admin-list th, .admin-list td { padding: 10px; border: 1px solid #ddd; text-align: left; font-size: 0.9rem;}
@@ -131,6 +129,9 @@
         .loading { text-align: center; font-size: 1.5rem; color: #666; margin-top: 50px; width: 100%; }
 
         .admin-only { display: none; }
+        
+        .actions-cell { display: flex; gap: 5px; }
+        .actions-cell button { border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; color: white; font-size: 0.8rem;}
     </style>
 </head>
 <body>
@@ -170,10 +171,12 @@
             </div>
 
             <div id="panelSection" class="admin-only">
-                <h2>Panel de Control</h2>
+                <h2 id="panelTitle">Agregar Nueva Calcomanía</h2>
                 <button class="btn-danger" id="logoutBtn" style="padding: 5px 10px; float: right; margin-top: -40px;">Cerrar Sesión</button>
                 
                 <form id="stickerForm">
+                    <input type="hidden" id="stickerId">
+
                     <div class="form-group">
                         <label>Nombre de la Calcomanía / Jugador</label>
                         <input type="text" id="title" required placeholder="Ej: Lionel Messi - Oro">
@@ -201,16 +204,17 @@
                             <option value="false">Agotado</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn-block btn-success">Guardar en la Nube</button>
+                    <button type="submit" id="submitFormBtn" class="btn-block btn-success">Guardar en la Nube</button>
+                    <button type="button" id="cancelEditBtn" class="btn-block" style="background:#bbb; display:none; color:black;">Cancelar Edición</button>
                 </form>
 
                 <hr style="margin: 20px 0;">
-                <h3>Inventario</h3>
+                <h3>Inventario Actual</h3>
                 <table class="admin-list">
                     <thead>
                         <tr>
                             <th>Nombre</th>
-                            <th>Acción</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="adminTableBody"></tbody>
@@ -223,10 +227,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // CONFIGURACIÓN DE TU PROYECTO
+        // CONFIGURACIÓN DE TIENDA DE FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
@@ -241,7 +245,7 @@
         const auth = getAuth(app);
         const stickersCollection = collection(db, "stickers");
 
-        const WHATSAPP_NUMBER = "50250103703"; // Tu número real
+        const WHATSAPP_NUMBER = "50250103703"; // Reemplaza con tu número completo
 
         // DOM Elements
         const catalog = document.getElementById('catalog');
@@ -250,8 +254,16 @@
         const panelSection = document.getElementById('panelSection');
         const headerAdminBtn = document.getElementById('headerAdminBtn');
         const searchBar = document.getElementById('searchBar');
+        
+        // Elementos del formulario dinámico
+        const stickerForm = document.getElementById('stickerForm');
+        const stickerIdInput = document.getElementById('stickerId');
+        const panelTitle = document.getElementById('panelTitle');
+        const submitFormBtn = document.getElementById('submitFormBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
 
-        let localStickersArray = []; // Guardará los datos de Firebase localmente para poder filtrarlos rápido
+        let localStickersArray = []; 
+        let isEditing = false;
 
         // Monitorear Autenticación
         onAuthStateChanged(auth, (user) => {
@@ -263,6 +275,7 @@
                 loginSection.style.display = 'block';
                 panelSection.style.display = 'none';
                 headerAdminBtn.textContent = "⚙️ Administrar";
+                resetFormState();
             }
         });
 
@@ -284,18 +297,17 @@
             signOut(auth).then(() => alert("Sesión cerrada"));
         });
 
-        // Función Principal para Dibujar las Tarjetas (Soporta filtros)
+        // Dibujar las Tarjetas en la Tienda Pública
         function displayStickers(stickersToDisplay) {
             catalog.innerHTML = '';
 
             if(stickersToDisplay.length === 0) {
-                catalog.innerHTML = '<p class="loading">No se encontraron calcomanías que coincidan.</p>';
+                catalog.innerHTML = '<p class="loading">No se encontraron calcomanías.</p>';
                 return;
             }
 
             stickersToDisplay.forEach((item) => {
                 const sticker = item.data;
-                const id = item.id;
                 
                 const card = document.createElement('div');
                 card.className = 'card';
@@ -318,7 +330,7 @@
             });
         }
 
-        // Escuchar la base de datos de Firebase en tiempo real
+        // Sincronización en tiempo real con Firebase
         onSnapshot(stickersCollection, (snapshot) => {
             localStickersArray = [];
             adminTableBody.innerHTML = '';
@@ -327,53 +339,99 @@
                 const id = documento.id;
                 const data = documento.data();
                 
-                // Guardamos en nuestra lista local para la búsqueda de los clientes
                 localStickersArray.push({ id, data });
 
-                // Llenamos la lista interna del panel administrador
+                // Renderizar tabla de administración con botones Editar y Eliminar
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><strong>[${data.team || '?'}]</strong> ${data.title}</td>
-                    <td><button class="delete-btn" data-id="${id}" style="background:#c5221f; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Eliminar</button></td>
+                    <td class="actions-cell">
+                        <button class="edit-btn" data-id="${id}" style="background:#dfac12; color:#2c2c2c; font-weight:bold;">Editar</button>
+                        <button class="delete-btn" data-id="${id}" style="background:#c5221f;">Borrar</button>
+                    </td>
                 `;
                 adminTableBody.appendChild(row);
             });
 
-            // Mostrar todos los productos inicialmente
             displayStickers(localStickersArray);
 
-            // Re-asignar eventos a los nuevos botones de eliminar
+            // Asignar funciones a los botones de Eliminar
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const docId = e.target.getAttribute('data-id');
                     if(confirm("¿Seguro que deseas eliminar este artículo?")) {
                         try {
                             await deleteDoc(doc(db, "stickers", docId));
-                        } catch (err) {
-                            alert("No tienes permisos de administrador.");
-                        }
+                            if(stickerIdInput.value === docId) resetFormState(); // Si borras la que estás editando, resetea
+                        } catch (err) { alert("Error de permisos."); }
                     }
+                });
+            });
+
+            // Asignar funciones a los botones de Editar
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const docId = e.target.getAttribute('data-id');
+                    prepareEdit(docId);
                 });
             });
         });
 
-        // LÓGICA DEL BUSCADOR (Filtra en tiempo real mientras el usuario escribe)
+        // Función para preparar el formulario para Editar
+        function prepareEdit(docId) {
+            const target = localStickersArray.find(item => item.id === docId);
+            if(!target) return;
+
+            // Rellenar campos del formulario con los datos viejos
+            stickerIdInput.value = target.id;
+            document.getElementById('title').value = target.data.title;
+            document.getElementById('team').value = target.data.team || '';
+            document.getElementById('desc').value = target.data.desc || '';
+            document.getElementById('imgUrl').value = target.data.imgUrl;
+            document.getElementById('price').value = target.data.price;
+            document.getElementById('status').value = target.data.status ? "true" : "false";
+
+            // Modificar la Interfaz para reflejar el estado "Editando"
+            isEditing = true;
+            panelTitle.textContent = "✏️ Editando Calcomanía";
+            submitFormBtn.textContent = "Actualizar Calcomanía";
+            submitFormBtn.className = "btn-block btn-warn";
+            cancelEditBtn.style.display = "block";
+            
+            // Subir el scroll del modal automáticamente para que veas el formulario editándose
+            document.querySelector('.modal-content').scrollTop = 0;
+        }
+
+        // Función para resetear el formulario a su estado original (Agregar)
+        function resetFormState() {
+            isEditing = false;
+            stickerForm.reset();
+            stickerIdInput.value = "";
+            panelTitle.textContent = "Agregar Nueva Calcomanía";
+            submitFormBtn.textContent = "Guardar en la Nube";
+            submitFormBtn.className = "btn-block btn-success";
+            cancelEditBtn.style.display = "none";
+        }
+
+        // Botón Cancelar Edición
+        cancelEditBtn.addEventListener('click', resetFormState);
+
+        // LÓGICA DEL BUSCADOR
         searchBar.addEventListener('input', (e) => {
             const text = e.target.value.toLowerCase().trim();
-            
             const filtered = localStickersArray.filter(item => {
                 const title = (item.data.title || '').toLowerCase();
                 const team = (item.data.team || '').toLowerCase();
                 return title.includes(text) || team.includes(text);
             });
-
             displayStickers(filtered);
         });
 
-        // Guardar Calcomanía Nueva en Firebase
-        document.getElementById('stickerForm').addEventListener('submit', async (e) => {
+        // Guardar O Editar en Firebase mediante el mismo submit
+        stickerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const newSticker = {
+            
+            const stickerData = {
                 title: document.getElementById('title').value,
                 team: document.getElementById('team').value,
                 desc: document.getElementById('desc').value,
@@ -381,12 +439,22 @@
                 price: document.getElementById('price').value,
                 status: document.getElementById('status').value === "true"
             };
+
             try {
-                await addDoc(stickersCollection, newSticker);
-                document.getElementById('stickerForm').reset();
+                if (isEditing) {
+                    // MODO EDITAR: Actualiza el documento existente usando su ID
+                    const id = stickerIdInput.value;
+                    await updateDoc(doc(db, "stickers", id), stickerData);
+                    alert("¡Calcomanía actualizada correctamente!");
+                } else {
+                    // MODO NUEVO: Agrega un documento nuevo
+                    await addDoc(stickersCollection, stickerData);
+                    alert("¡Calcomanía guardada con éxito!");
+                }
+                resetFormState();
                 window.closeAdminModal();
             } catch (error) {
-                alert("Error: No estás autorizado.");
+                alert("Error de autenticación o base de datos: " + error.message);
             }
         });
 
