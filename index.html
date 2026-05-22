@@ -47,11 +47,8 @@
             display: flex; flex-direction: column;
         }
         .card:hover { transform: translateY(-5px); }
-
         .card img { width: 100%; height: 250px; object-fit: cover; background-color: #eee; }
-
         .card-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
-
         .card-title { font-size: 1.4rem; margin: 0 0 10px 0; color: var(--primary); }
         .card-desc { font-size: 0.9rem; color: #666; flex-grow: 1; margin-bottom: 15px; }
         
@@ -72,7 +69,7 @@
         }
         .whatsapp-btn:hover { background-color: #1ebd58; }
 
-        /* Modal */
+        /* Modales */
         .modal {
             display: none; position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -86,7 +83,6 @@
         }
 
         .modal h2 { margin-top: 0; color: var(--primary); }
-
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         .form-group input, .form-group textarea, .form-group select {
@@ -102,6 +98,9 @@
         .admin-list th { background: #f4f4f4; }
         
         .loading { text-align: center; font-size: 1.5rem; color: #666; margin-top: 50px; }
+
+        /* Control de lo que ve el admin vs lo que ve el público */
+        .admin-only { display: none; }
     </style>
 </head>
 <body>
@@ -109,66 +108,87 @@
     <header>
         <h1>Mundial Sticker Shop</h1>
         <p>¡Completa tu álbum con nosotros!</p>
-        <button class="admin-btn" onclick="toggleModal(true)">⚙️ Administrar</button>
+        <button class="admin-btn" id="headerAdminBtn" onclick="openAdminModal()">⚙️ Administrar</button>
     </header>
 
     <div class="container">
         <div id="catalog" class="grid">
-            <p class="loading">Cargando calcomanías desde la nube...</p>
+            <p class="loading">Cargando calcomanías...</p>
         </div>
     </div>
 
     <div id="adminModal" class="modal">
         <div class="modal-content">
-            <h2>Panel de Control</h2>
-            <form id="stickerForm">
-                <div class="form-group">
-                    <label>Nombre de la Calcomanía / Jugador</label>
-                    <input type="text" id="title" required placeholder="Ej: Lionel Messi - Oro">
-                </div>
-                <div class="form-group">
-                    <label>Descripción</label>
-                    <textarea id="desc" rows="2" placeholder="Ej: Sticker número 14 del álbum en perfecto estado."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>URL de la Imagen</label>
-                    <input type="url" id="imgUrl" required placeholder="https://enlace-de-tu-imagen.com/foto.jpg">
-                </div>
-                <div class="form-group">
-                    <label>Precio</label>
-                    <input type="text" id="price" required placeholder="Ej: $5.00">
-                </div>
-                <div class="form-group">
-                    <label>Disponibilidad</label>
-                    <select id="status">
-                        <option value="true">Disponible</option>
-                        <option value="false">Agotado</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-block btn-success">Guardar en la Nube</button>
-            </form>
+            
+            <div id="loginSection">
+                <h2>Iniciar Sesión como Admin</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="loginEmail" required placeholder="admin@correo.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input type="password" id="loginPassword" required placeholder="******">
+                    </div>
+                    <button type="submit" class="btn-block btn-success">Ingresar</button>
+                </form>
+            </div>
 
-            <hr style="margin: 20px 0;">
-            <h3>Inventario en Firebase</h3>
-            <table class="admin-list">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="adminTableBody"></tbody>
-            </table>
+            <div id="panelSection" class="admin-only">
+                <h2>Panel de Control</h2>
+                <button class="btn-danger" id="logoutBtn" style="padding: 5px 10px; float: right; margin-top: -40px;">Cerrar Sesión</button>
+                
+                <form id="stickerForm">
+                    <div class="form-group">
+                        <label>Nombre de la Calcomanía</label>
+                        <input type="text" id="title" required placeholder="Ej: Lionel Messi - Oro">
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea id="desc" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>URL de la Imagen</label>
+                        <input type="url" id="imgUrl" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Precio</label>
+                        <input type="text" id="price" required placeholder="Ej: $5.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Disponibilidad</label>
+                        <select id="status">
+                            <option value="true">Disponible</option>
+                            <option value="false">Agotado</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-block btn-success">Guardar en la Nube</button>
+                </form>
 
-            <button class="btn-block btn-danger" onclick="toggleModal(false)" style="background: #666; margin-top: 15px;">Cerrar Panel</button>
+                <hr style="margin: 20px 0;">
+                <h3>Inventario</h3>
+                <table class="admin-list">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody"></tbody>
+                </table>
+            </div>
+
+            <button class="btn-block" onclick="closeAdminModal()" style="background: #666; color: white; margin-top: 15px;">Cerrar Ventana</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // CONFIGURACIÓN DE TU PROYECTO (PEGA TU PROPIO CÓDIGO AQUÍ)
+        // CONFIGURACIÓN DE TU PROYECTO (Pon tus datos aquí, no pasa nada si son visibles)
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
@@ -178,80 +198,113 @@
             appId: "1:20210064860:web:01db78b92e3b0d43400319"
         };
 
-        // Inicializar Firebase y Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
         const stickersCollection = collection(db, "stickers");
 
-        // CONFIGURACIÓN DE TU WHATSAPP
-        const WHATSAPP_NUMBER = "50250103703"; // Cambia por tu número real con código de país
+        const WHATSAPP_NUMBER = "50250103703"; // Tu WhatsApp completo
 
-        // Elementos del DOM
+        // DOM Elements
         const catalog = document.getElementById('catalog');
-        const stickerForm = document.getElementById('stickerForm');
         const adminTableBody = document.getElementById('adminTableBody');
-        const modal = document.getElementById('adminModal');
+        const loginSection = document.getElementById('loginSection');
+        const panelSection = document.getElementById('panelSection');
+        const headerAdminBtn = document.getElementById('headerAdminBtn');
 
-        // Escuchar cambios en tiempo real en la base de datos de Firebase
+        // Monitorear si el Administrador está logueado o no
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Si está logueado: Oculta login y muestra el panel de carga de datos
+                loginSection.style.display = 'none';
+                panelSection.style.display = 'block';
+                headerAdminBtn.textContent = "⚙️ Panel Activo";
+            } else {
+                // Si NO está logueado: Muestra login y oculta el panel privado
+                loginSection.style.display = 'block';
+                panelSection.style.display = 'none';
+                headerAdminBtn.textContent = "⚙️ Administrar";
+            }
+        });
+
+        // Evento: Iniciar Sesión
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPassword').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                alert("¡Bienvenido Administrador!");
+            } catch (error) {
+                alert("Acceso denegado. Datos incorrectos.");
+            }
+        });
+
+        // Evento: Cerrar Sesión
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => alert("Sesión cerrada"));
+        });
+
+        // Cargar Catálogo desde Firestore en Tiempo Real
         onSnapshot(stickersCollection, (snapshot) => {
             catalog.innerHTML = '';
             adminTableBody.innerHTML = '';
 
             if(snapshot.empty) {
-                catalog.innerHTML = '<p class="loading">No hay calcomanías disponibles por ahora.</p>';
+                catalog.innerHTML = '<p class="loading">No hay productos disponibles.</p>';
                 return;
             }
 
             snapshot.forEach((documento) => {
                 const sticker = documento.data();
-                const id = documento.id; // ID único de Firebase
+                const id = documento.id;
 
-                // 1. Renderizar en la Tienda Pública
+                // Render para clientes
                 const card = document.createElement('div');
                 card.className = 'card';
-                
                 const statusClass = sticker.status ? 'instock' : 'outstock';
                 const statusText = sticker.status ? 'Disponible' : 'Agotado';
+                const wpMessage = encodeURIComponent(`Hola, quiero comprar la calcomanía *${sticker.title}* por ${sticker.price}.`);
                 
-                const wpMessage = encodeURIComponent(`Hola, estoy interesado en la calcomanía de *${sticker.title}* por ${sticker.price}. ¿Sigue disponible?`);
-                const wpLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${wpMessage}`;
-
                 card.innerHTML = `
-                    <img src="${sticker.imgUrl}" alt="${sticker.title}">
+                    <img src="${sticker.imgUrl}">
                     <div class="card-content">
                         <h3 class="card-title">${sticker.title}</h3>
                         <p class="card-desc">${sticker.desc}</p>
                         <span class="status ${statusClass}">${statusText}</span>
                         <div class="price">${sticker.price}</div>
-                        ${sticker.status ? `<a href="${wpLink}" target="_blank" class="whatsapp-btn">💬 Comprar por WhatsApp</a>` : `<button class="whatsapp-btn" style="background:#ccc; cursor:not-allowed;" disabled>Agotado</button>`}
+                        ${sticker.status ? `<a href="https://wa.me/${WHATSAPP_NUMBER}?text=${wpMessage}" target="_blank" class="whatsapp-btn">💬 Comprar por WhatsApp</a>` : `<button class="whatsapp-btn" style="background:#ccc;" disabled>Agotado</button>`}
                     </div>
                 `;
                 catalog.appendChild(card);
 
-                // 2. Renderizar en la lista del Panel de Administración
+                // Render para la lista interna del panel administrador
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${sticker.title}</td>
-                    <td><button class="delete-btn" data-id="${id}" style="background:#c5221f; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Eliminar</button></td>
+                    <td><button class="delete-btn" data-id="${id}" style="background:#c5221f; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">Eliminar</button></td>
                 `;
                 adminTableBody.appendChild(row);
             });
 
-            // Asignar eventos de eliminación a los botones creados
+            // Lógica del botón eliminar
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const docId = e.target.getAttribute('data-id');
-                    if(confirm("¿Seguro que deseas eliminar esta calcomanía de la nube?")) {
-                        await deleteDoc(doc(db, "stickers", docId));
+                    if(confirm("¿Seguro que deseas eliminar este artículo de la base de datos?")) {
+                        try {
+                            await deleteDoc(doc(db, "stickers", docId));
+                        } catch (err) {
+                            alert("No tienes permisos para hacer esto.");
+                        }
                     }
                 });
             });
         });
 
-        // Guardar Nueva Calcomanía en Firebase
-        stickerForm.addEventListener('submit', async (e) => {
+        // Guardar Calcomanía (Solo funcionará si estás autenticado)
+        document.getElementById('stickerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const newSticker = {
                 title: document.getElementById('title').value,
                 desc: document.getElementById('desc').value,
@@ -259,20 +312,17 @@
                 price: document.getElementById('price').value,
                 status: document.getElementById('status').value === "true"
             };
-
             try {
                 await addDoc(stickersCollection, newSticker);
-                stickerForm.reset();
-                window.toggleModal(false); // Cerrar panel al guardar
+                document.getElementById('stickerForm').reset();
             } catch (error) {
-                alert("Error al guardar en Firebase: " + error.message);
+                alert("Error de seguridad: No estás autorizado para escribir datos.");
             }
         });
 
-        // Funciones globales para abrir y cerrar el modal
-        window.toggleModal = function(show) {
-            modal.style.display = show ? 'flex' : 'none';
-        }
+        // Funciones del Modal globales
+        window.openAdminModal = () => document.getElementById('adminModal').style.display = 'flex';
+        window.closeAdminModal = () => document.getElementById('adminModal').style.display = 'none';
     </script>
 </body>
 </html>
