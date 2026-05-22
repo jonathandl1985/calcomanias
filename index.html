@@ -3,258 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Álbum del Mundial - Calcomanías</title>
+    <title>Catálogo de Calcomanías</title>
     <style>
-        :root {
-            --primary: #8a1538; /* Color vino típico del mundial */
-            --accent: #eeeee4;
-            --disponible: #28a745;
-            --vendida: #dc3545;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f7f7f7; }
-        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; position: relative; }
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-        
-        /* Botón de Admin oculto discretamente */
-        #btnAdminMode { position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid white; color: white; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
-        
-        /* Panel de Administración */
-        .admin-panel { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; display: none; }
-        .admin-panel h2 { margin-top: 0; color: var(--primary); }
-        .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn { background-color: var(--primary); color: white; padding: 0.7rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
-        .btn:hover { opacity: 0.9; }
-
-        /* Catálogo de Calcomanías */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
-        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e1e1e1; display: flex; flex-direction: column; }
-        .card img { width: 100%; height: 250px; object-fit: cover; background-color: #eee; }
-        .card-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
-        .card-title { font-size: 1.2rem; margin: 0 0 0.5rem 0; color: #333; }
-        .card-desc { color: #666; font-size: 0.9rem; margin-bottom: 1rem; flex-grow: 1; }
-        .card-price { font-size: 1.3rem; font-weight: bold; color: var(--primary); margin-bottom: 1rem; }
-        
-        /* Etiquetas de Estado */
-        .badge { display: inline-block; padding: 0.25rem 0.7rem; border-radius: 50px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; color: white; margin-bottom: 1rem; align-self: flex-start; }
-        .badge.disponible { background-color: var(--disponible); }
-        .badge.vendida { background-color: var(--vendida); }
-
-        /* Botón WhatsApp */
-        .btn-whatsapp { background-color: #25D366; color: white; text-align: center; padding: 0.7rem; text-decoration: none; border-radius: 4px; font-weight: bold; display: block; }
-        .btn-whatsapp:hover { background-color: #20ba5a; }
-        .btn-whatsapp.disabled { background-color: #ccc; pointer-events: none; cursor: not-allowed; }
-
-        /* Acciones de Admin en la Tarjeta */
-        .admin-actions { display: none; background: #f0f0f0; padding: 0.5rem; justify-content: space-around; border-top: 1px solid #ddd; }
-        .btn-edit { background: #ffc107; color: black; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
-        .btn-delete { background: var(--vendida); color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+        :root { --primary: #8a1538; --disponible: #28a745; --vendida: #dc3545; }
+        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
+        .content { padding: 15px; flex-grow: 1; }
+        .price { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; color: white; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px; }
+        .disponible { background: var(--disponible); }
+        .vendida { background: var(--vendida); }
+        .btn-wa { display: block; background: #25D366; color: white; text-align: center; padding: 10px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
+        .btn-wa.disabled { background: #ccc; pointer-events: none; }
     </style>
-
-    <!-- Firebase SDK (Módulos para base de datos, almacenamiento y autenticación) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-        // CONFIGURACIÓN DE TU PROYECTO FIREBASE
-        // Reemplaza esto con las credenciales que te dé Firebase Console
-        const firebaseConfig = {
-            apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
-            authDomain: "calcos-6760b.firebaseapp.com",
-            projectId: "calcos-6760b",
-            storageBucket: "calcos-6760b.firebasestorage.app",
-            messagingSenderId: "20210064860",
-            appId: "1:20210064860:web:01db78b92e3b0d43400319"
-        };
-
-        // Inicializar Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
-        const auth = getAuth(app);
-
-        // Tu número de WhatsApp (50250103703)
-        const WHATSAPP_NUMERO = "50250103703"; 
-
-        // Variables Globales de estado
-        let editandoId = null;
-
-        // --- MANEJO DE INTERFAZ Y EVENTOS ---
-        window.addEventListener('DOMContentLoaded', () => {
-            const catalog = document.getElementById('catalog');
-            const adminPanel = document.getElementById('adminPanel');
-            const btnAdminMode = document.getElementById('btnAdminMode');
-            const form = document.getElementById('stickerForm');
-
-            // Escuchar cambios en la base de datos en tiempo real
-            onSnapshot(collection(db, "calcomanias"), (snapshot) => {
-                catalog.innerHTML = "";
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const id = docSnap.id;
-                    
-                    // Crear tarjeta de calcomanía
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    
-                    // Configurar el botón de WhatsApp con texto dinámico
-                    const mensajeWa = encodeURIComponent(`Hola, me interesa la calcomanía "${data.nombre}" que tienes en venta.`);
-                    const urlWa = `https://wa.me/${WHATSAPP_NUMERO}?text=${mensajeWa}`;
-                    
-                    card.innerHTML = `
-                        <img src="${data.imagenUrl || 'https://via.placeholder.com/250'}" alt="${data.nombre}">
-                        <div class="card-content">
-                            <span class="badge ${data.estado}">${data.estado}</span>
-                            <h3 class="card-title">${data.nombre}</h3>
-                            <p class="card-desc">${data.descripcion}</p>
-                            <div class="card-price">Q${data.precio}</div>
-                            <a href="${urlWa}" target="_blank" class="btn-whatsapp ${data.estado === 'vendida' ? 'disabled' : ''}">
-                                ${data.estado === 'vendida' ? 'No disponible' : 'Apartar por WhatsApp'}
-                            </a>
-                        </div>
-                        <div class="admin-actions" style="display: ${auth.currentUser ? 'flex' : 'none'}">
-                            <button class="btn-edit" onclick="cargarParaEditar('${id}', '${data.nombre}', '${data.descripcion}', '${data.precio}', '${data.estado}')">Editar</button>
-                            <button class="btn-delete" onclick="eliminarSticker('${id}')">Eliminar</button>
-                        </div>
-                    `;
-                    catalog.appendChild(card);
-                });
-            });
-
-            // Login básico para el administrador al dar clic en el botón oculto
-            btnAdminMode.addEventListener('click', () => {
-                if(auth.currentUser) {
-                    signOut(auth);
-                } else {
-                    const email = prompt("Correo del Administrador:");
-                    const password = prompt("Contraseña:");
-                    if(email && password) {
-                        signInWithEmailAndPassword(auth, email, password).catch(err => alert("Error de acceso: " + err.message));
-                    }
-                }
-            });
-
-            // Controlar el estado de autenticación
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    adminPanel.style.display = 'block';
-                    btnAdminMode.innerText = "Cerrar Sesión Admin";
-                    document.querySelectorAll('.admin-actions').forEach(el => el.style.display = 'flex');
-                } else {
-                    adminPanel.style.display = 'none';
-                    btnAdminMode.innerText = "Admin Log";
-                    document.querySelectorAll('.admin-actions').forEach(el => el.style.display = 'none');
-                }
-            });
-
-            // Guardar o Actualizar Calcomanía
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const nombre = document.getElementById('nombre').value;
-                const descripcion = document.getElementById('descripcion').value;
-                const precio = document.getElementById('precio').value;
-                const estado = document.getElementById('estado').value;
-                const fileInput = document.getElementById('imagen');
-                
-                let imagenUrl = "";
-
-                try {
-                    // Si se subió una nueva imagen
-                    if(fileInput.files.length > 0) {
-                        const file = fileInput.files[0];
-                        const storageRef = ref(storage, 'calcomanias/' + Date.now() + "_" + file.name);
-                        const uploadResult = await uploadBytes(storageRef, file);
-                        imagenUrl = await getDownloadURL(uploadResult.ref);
-                    }
-
-                    if(editandoId) {
-                        // Modo Edición
-                        const updateData = { nombre, descripcion, precio, estado };
-                        if(imagenUrl !== "") updateData.imagenUrl = imagenUrl; // Solo actualiza foto si se subió una nueva
-                        
-                        await updateDoc(doc(db, "calcomanias", editandoId), updateData);
-                        editandoId = null;
-                        document.getElementById('formTitle').innerText = "Subir Nueva Calcomanía";
-                    } else {
-                        // Modo Nuevo
-                        await addDoc(collection(db, "calcomanias"), {
-                            nombre, descripcion, precio, estado, imagenUrl
-                        });
-                    }
-                    form.reset();
-                } catch (error) {
-                    alert("Error en la operación: " + error.message);
-                }
-            });
-        });
-
-        // Funciones accesibles globalmente para los botones de la tarjeta
-        window.cargarParaEditar = (id, nombre, descripcion, precio, estado) => {
-            document.getElementById('nombre').value = nombre;
-            document.getElementById('descripcion').value = descripcion;
-            document.getElementById('precio').value = precio;
-            document.getElementById('estado').value = estado;
-            editandoId = id;
-            document.getElementById('formTitle').innerText = "Modificar Calcomanía (ID: " + id + ")";
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        };
-
-        window.eliminarSticker = async (id) => {
-            if(confirm("¿Seguro que deseas eliminar esta calcomanía?")) {
-                await deleteDoc(doc(db, "calcomanias", id));
-            }
-        };
-    </script>
 </head>
 <body>
 
-    <header>
-        <h1>Álbum Mundialista - Disponibilidad</h1>
-        <button id="btnAdminMode">Admin Log</button>
-    </header>
+<header>
+    <h1>Mis Calcomanías del Mundial</h1>
+    <p>Actualizado desde Google Sheets</p>
+</header>
 
-    <div class="container">
-        
-        <!-- PANEL DE ADMINISTRACIÓN (VISTA OCULTA POR DEFECTO) -->
-        <div class="admin-panel" id="adminPanel">
-            <h2 id="formTitle">Subir Nueva Calcomanía</h2>
-            <form id="stickerForm">
-                <div class="form-group">
-                    <label for="nombre">Nombre / Número de Calcomanía</label>
-                    <input type="text" id="nombre" required placeholder="Ej: Cristiano Ronaldo - POR 7">
-                </div>
-                <div class="form-group">
-                    <label for="descripcion">Descripción</label>
-                    <textarea id="descripcion" rows="3" placeholder="Detalles de la estampa, holograma, edición especial, etc."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="precio">Precio</label>
-                    <input type="number" step="0.01" id="precio" required placeholder="0.00">
-                </div>
-                <div class="form-group">
-                    <label for="estado">Estado Inicial</label>
-                    <select id="estado">
-                        <option value="disponible">Disponible</option>
-                        <option value="vendida">Vendida</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="imagen">Foto de la Calcomanía (Dejar vacío en edición si no se desea cambiar)</label>
-                    <input type="file" id="imagen" accept="image/*">
-                </div>
-                <button type="submit" class="btn">Guardar Calcomanía</button>
-            </form>
-        </div>
-
-        <!-- SECCIÓN PÚBLICA: CATÁLOGO -->
-        <h2>Catálogo Disponibles / Vendidas</h2>
-        <div class="grid" id="catalog">
-            <!-- Las tarjetas se generan dinámicamente con JavaScript desde Firebase -->
-        </div>
+<div class="grid" id="catalogo">
     </div>
 
+<script>
+    // 1. PEGA AQUÍ TU ENLACE DE GOOGLE SHEETS PUBLICADO COMO CSV
+    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJQymlPdsNUtQuU0A8DKTBc8OxYlPH6MXX7eCnCh01cHLQt85-l82NCVCq7ElplpzUgXdp2bvzYTZn/pubhtml?gid=0&single=true'; 
+    const WHATSAPP_NUM = '50250103703'; // Tu número
+
+    async function cargarCalcomanias() {
+        const respuesta = await fetch(SHEET_CSV_URL);
+        const data = await respuesta.text();
+        const filas = data.split('\n').slice(1); // Ignorar encabezado
+        const contenedor = document.getElementById('catalogo');
+
+        filas.forEach(fila => {
+            const cols = fila.split(',');
+            if (cols.length < 4) return;
+
+            const [nombre, desc, precio, estado, img] = cols;
+            const esVendida = estado.trim().toLowerCase() === 'vendida';
+            
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="${img.trim() || 'https://via.placeholder.com/200'}" alt="${nombre}">
+                <div class="content">
+                    <span class="badge ${esVendida ? 'vendida' : 'disponible'}">${estado}</span>
+                    <h3>${nombre}</h3>
+                    <p>${desc}</p>
+                    <div class="price">Q${precio}</div>
+                    <a href="https://wa.me/${WHATSAPP_NUM}?text=Hola, quiero la calcomanía: ${nombre}" 
+                       target="_blank" 
+                       class="btn-wa ${esVendida ? 'disabled' : ''}">
+                       ${esVendida ? 'AGOTADA' : 'Pedir por WhatsApp'}
+                    </a>
+                </div>
+            `;
+            contenedor.appendChild(card);
+        });
+    }
+
+    cargarCalcomanias();
+</script>
 </body>
 </html>
