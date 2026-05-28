@@ -35,7 +35,8 @@
 
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
 
-          .search-container {
+        /* Barras de Búsqueda */
+        .search-container {
             margin-bottom: 30px;
             display: flex;
             justify-content: center;
@@ -54,6 +55,19 @@
         }
         .search-bar:focus { border-color: var(--primary); }
 
+        .admin-search-bar {
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .admin-search-bar:focus { border-color: var(--primary); }
+
+        /* Catálogo */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -70,10 +84,10 @@
         .card img { 
             width: 100%; 
             height: 250px; 
-            object-fit: contain; /* Ajusta la imagen entera sin recortar ni deformar */
-            background-color: #fcfcfc; /* Fondo limpio para calcomanías horizontales o transparentes */
+            object-fit: contain; 
+            background-color: #fcfcfc; 
             border-bottom: 1px solid #eee;
-            padding: 10px; /* Margen interno para que no pegue a los bordes de la tarjeta */
+            padding: 10px; 
             box-sizing: border-box;
         }
         
@@ -130,7 +144,7 @@
         .btn-danger { background: #c5221f; color: white; }
         .btn-warn { background: var(--accent); color: var(--dark); }
 
-        .admin-list { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        .admin-list { width: 100%; margin-top: 10px; border-collapse: collapse; }
         .admin-list th, .admin-list td { padding: 10px; border: 1px solid #ddd; text-align: left; font-size: 0.9rem;}
         .admin-list th { background: #f4f4f4; }
         
@@ -216,8 +230,11 @@
                     <button type="button" id="cancelEditBtn" class="btn-block" style="background:#bbb; display:none; color:black;">Cancelar Edición</button>
                 </form>
 
-                <hr style="margin: 20px 0;">
+                <hr style="margin: 30px 0;">
+                
                 <h3>Inventario Actual</h3>
+                <input type="text" id="adminSearchBar" class="admin-search-bar" placeholder="Filtrar inventario por nombre o país...">
+                
                 <table class="admin-list">
                     <thead>
                         <tr>
@@ -238,6 +255,7 @@
         import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+        // CONFIGURACIÓN DE TU FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
@@ -252,14 +270,16 @@
         const auth = getAuth(app);
         const stickersCollection = collection(db, "stickers");
 
-        const WHATSAPP_NUMBER = "50250103703"; 
+        const WHATSAPP_NUMBER = "50200000000"; // Reemplaza con tu número real
 
+        // DOM Elements
         const catalog = document.getElementById('catalog');
         const adminTableBody = document.getElementById('adminTableBody');
         const loginSection = document.getElementById('loginSection');
         const panelSection = document.getElementById('panelSection');
         const headerAdminBtn = document.getElementById('headerAdminBtn');
         const searchBar = document.getElementById('searchBar');
+        const adminSearchBar = document.getElementById('adminSearchBar');
         
         const stickerForm = document.getElementById('stickerForm');
         const stickerIdInput = document.getElementById('stickerId');
@@ -270,6 +290,7 @@
         let localStickersArray = []; 
         let isEditing = false;
 
+        // Monitorear Autenticación
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 loginSection.style.display = 'none';
@@ -283,7 +304,7 @@
             }
         });
 
-  
+        // Evento: Iniciar Sesión
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
@@ -296,12 +317,12 @@
             }
         });
 
-
+        // Evento: Cerrar Sesión
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth).then(() => alert("Sesión cerrada"));
         });
 
-
+        // Dibujar las Tarjetas en la Tienda Pública
         function displayStickers(stickersToDisplay) {
             catalog.innerHTML = '';
 
@@ -334,16 +355,13 @@
             });
         }
 
-
-        onSnapshot(stickersCollection, (snapshot) => {
-            localStickersArray = [];
+        // Renderizar la tabla de administración (Soporta filtrado interno)
+        function displayAdminTable(stickersToDisplay) {
             adminTableBody.innerHTML = '';
-
-            snapshot.forEach((documento) => {
-                const id = documento.id;
-                const data = documento.data();
-                
-                localStickersArray.push({ id, data });
+            
+            stickersToDisplay.forEach((item) => {
+                const id = item.id;
+                const data = item.data;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -356,9 +374,7 @@
                 adminTableBody.appendChild(row);
             });
 
-            displayStickers(localStickersArray);
-
-
+            // Re-asignar eventos a los botones de Eliminar
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const docId = e.target.getAttribute('data-id');
@@ -371,15 +387,31 @@
                 });
             });
 
+            // Re-asignar eventos a los botones de Editar
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const docId = e.target.getAttribute('data-id');
                     prepareEdit(docId);
                 });
             });
+        }
+
+        // Sincronización en tiempo real con Firebase
+        onSnapshot(stickersCollection, (snapshot) => {
+            localStickersArray = [];
+
+            snapshot.forEach((documento) => {
+                const id = documento.id;
+                const data = documento.data();
+                localStickersArray.push({ id, data });
+            });
+
+            // Al recibir cambios de Firebase, refresca la tienda y la lista de admin respetando búsquedas activas
+            filterPublicCatalog();
+            filterAdminInventory();
         });
 
-
+        // Función para preparar el formulario para Editar
         function prepareEdit(docId) {
             const target = localStickersArray.find(item => item.id === docId);
             if(!target) return;
@@ -401,7 +433,7 @@
             document.querySelector('.modal-content').scrollTop = 0;
         }
 
-
+        // Resetear Formulario
         function resetFormState() {
             isEditing = false;
             stickerForm.reset();
@@ -414,18 +446,31 @@
 
         cancelEditBtn.addEventListener('click', resetFormState);
 
-
-        searchBar.addEventListener('input', (e) => {
-            const text = e.target.value.toLowerCase().trim();
+        // LÓGICA DE FILTRADO (Tienda Pública)
+        function filterPublicCatalog() {
+            const text = searchBar.value.toLowerCase().trim();
             const filtered = localStickersArray.filter(item => {
                 const title = (item.data.title || '').toLowerCase();
                 const team = (item.data.team || '').toLowerCase();
                 return title.includes(text) || team.includes(text);
             });
             displayStickers(filtered);
-        });
+        }
+        searchBar.addEventListener('input', filterPublicCatalog);
 
-  
+        // LÓGICA DE FILTRADO (Inventario de Administración)
+        function filterAdminInventory() {
+            const text = adminSearchBar.value.toLowerCase().trim();
+            const filtered = localStickersArray.filter(item => {
+                const title = (item.data.title || '').toLowerCase();
+                const team = (item.data.team || '').toLowerCase();
+                return title.includes(text) || team.includes(text);
+            });
+            displayAdminTable(filtered);
+        }
+        adminSearchBar.addEventListener('input', filterAdminInventory);
+
+        // Guardar o Editar mediante Submit
         stickerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -448,13 +493,13 @@
                     alert("¡Calcomanía guardada con éxito!");
                 }
                 resetFormState();
-                window.closeAdminModal();
+                // 👁️ REMOVIDO: window.closeAdminModal() para que NO te saque del menú
             } catch (error) {
                 alert("Error de base de datos: " + error.message);
             }
         });
 
-
+        // Modales Globales
         window.openAdminModal = () => document.getElementById('adminModal').style.display = 'flex';
         window.closeAdminModal = () => document.getElementById('adminModal').style.display = 'none';
     </script>
