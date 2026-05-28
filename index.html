@@ -10,6 +10,7 @@
             --accent: #dfac12; 
             --dark: #2c2c2c;
             --light: #f4f4f4;
+            --whatsapp: #25D366;
         }
 
         body {
@@ -26,12 +27,25 @@
         header h1 { margin: 0; font-size: 2.5rem; }
         header p { margin: 5px 0 0 0; color: var(--accent); font-weight: bold; }
 
-        .admin-btn {
+        /* Contenedor de botones en el encabezado */
+        .header-buttons {
             position: absolute; top: 20px; right: 20px;
-            background: rgba(255,255,255,0.2); color: white;
-            border: 1px solid white; padding: 8px 15px;
-            cursor: pointer; border-radius: 5px;
+            display: flex;
+            gap: 10px;
         }
+
+        .header-btn {
+            color: white; border: 1px solid white; padding: 8px 15px;
+            cursor: pointer; border-radius: 5px; font-weight: bold;
+            text-decoration: none; font-size: 0.9rem;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: background 0.3s, transform 0.2s;
+        }
+        .header-btn:hover { transform: translateY(-2px); }
+
+        .btn-admin-nav { background: rgba(255,255,255,0.2); }
+        .btn-whatsapp-nav { background: var(--whatsapp); border-color: var(--whatsapp); }
+        .btn-whatsapp-nav:hover { background: #1ebd58; border-color: #1ebd58; }
 
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
 
@@ -56,14 +70,9 @@
         .search-bar:focus { border-color: var(--primary); }
 
         .admin-search-bar {
-            width: 100%;
-            padding: 10px 15px;
-            margin-bottom: 15px;
-            font-size: 0.95rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            outline: none;
-            box-sizing: border-box;
+            width: 100%; padding: 10px 15px; margin-bottom: 15px;
+            font-size: 0.95rem; border: 1px solid #ccc; border-radius: 6px;
+            outline: none; box-sizing: border-box;
         }
         .admin-search-bar:focus { border-color: var(--primary); }
 
@@ -82,13 +91,9 @@
         .card:hover { transform: translateY(-5px); }
         
         .card img { 
-            width: 100%; 
-            height: 250px; 
-            object-fit: contain; 
-            background-color: #fcfcfc; 
-            border-bottom: 1px solid #eee;
-            padding: 10px; 
-            box-sizing: border-box;
+            width: 100%; height: 250px; object-fit: contain; 
+            background-color: #fcfcfc; border-bottom: 1px solid #eee;
+            padding: 10px; box-sizing: border-box;
         }
         
         .card-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
@@ -102,9 +107,14 @@
         .card-title { font-size: 1.4rem; margin: 0 0 10px 0; color: var(--primary); }
         .card-desc { font-size: 0.9rem; color: #666; flex-grow: 1; margin-bottom: 15px; }
         
+        /* Etiquetas de Estado Públicas y de Admin */
         .status {
             display: inline-block; padding: 5px 10px; border-radius: 20px;
             font-size: 0.8rem; font-weight: bold; margin-bottom: 15px; width: fit-content;
+        }
+        .admin-status {
+            display: inline-block; padding: 3px 8px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: bold; margin-left: 5px;
         }
         .instock { background: #e6f4ea; color: #137333; }
         .outstock { background: #fce8e6; color: #c5221f; }
@@ -112,7 +122,7 @@
         .price { font-size: 1.6rem; font-weight: bold; color: var(--dark); margin-bottom: 15px; }
 
         .whatsapp-btn {
-            background-color: #25D366; color: white; text-align: center;
+            background-color: var(--whatsapp); color: white; text-align: center;
             padding: 12px; text-decoration: none; border-radius: 8px;
             font-weight: bold; display: flex; align-items: center;
             justify-content: center; gap: 10px; transition: background 0.3s;
@@ -154,14 +164,25 @@
         
         .actions-cell { display: flex; gap: 5px; }
         .actions-cell button { border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; color: white; font-size: 0.8rem;}
+
+        /* Ajuste para pantallas móviles */
+        @media (max-width: 600px) {
+            header { padding-bottom: 4.5rem; }
+            .header-buttons { position: absolute; bottom: 15px; top: auto; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); justify-content: center; }
+            .header-btn { flex-grow: 1; font-size: 0.8rem; padding: 8px 10px; }
+        }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Mundial Sticker Shop</h1>
-        <p>¡Completa tu álbum con nosotros!</p>
-        <button class="admin-btn" id="headerAdminBtn" onclick="openAdminModal()">⚙️ Administrar</button>
+        <p>¡Completa tu álbum con nosotros, compra, intercambia o vende, para mas info. Contáctanos!</p>
+        
+        <div class="header-buttons">
+            <a href="#" id="topWhatsAppBtn" target="_blank" class="header-btn btn-whatsapp-nav">💬 Contáctanos</a>
+            <button class="header-btn btn-admin-nav" id="headerAdminBtn" onclick="openAdminModal()">⚙️ Administrar</button>
+        </div>
     </header>
 
     <div class="container">
@@ -255,7 +276,7 @@
         import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // CONFIGURACIÓN DE TU FIREBASE
+       
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
@@ -270,9 +291,13 @@
         const auth = getAuth(app);
         const stickersCollection = collection(db, "stickers");
 
-        const WHATSAPP_NUMBER = "50200000000"; // Reemplaza con tu número real
+        const WHATSAPP_NUMBER = "50250103703"; //
 
-        // DOM Elements
+      
+        const generalWpMessage = encodeURIComponent("Hola, visité tu tienda de calcomanías y tengo una consulta general.");
+        document.getElementById('topWhatsAppBtn').href = `https://wa.me/${WHATSAPP_NUMBER}?text=${generalWpMessage}`;
+
+        
         const catalog = document.getElementById('catalog');
         const adminTableBody = document.getElementById('adminTableBody');
         const loginSection = document.getElementById('loginSection');
@@ -355,7 +380,7 @@
             });
         }
 
-        // Renderizar la tabla de administración (Soporta filtrado interno)
+        // ⚙️ Renderizar la tabla de administración con indicación de Estado
         function displayAdminTable(stickersToDisplay) {
             adminTableBody.innerHTML = '';
             
@@ -363,9 +388,16 @@
                 const id = item.id;
                 const data = item.data;
 
+                // Definir colores y texto del estado para el administrador
+                const statusClass = data.status ? 'instock' : 'outstock';
+                const statusText = data.status ? 'Disponible' : 'Agotado';
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><strong>[${data.team || '?'}]</strong> ${data.title}</td>
+                    <td>
+                        <strong>[${data.team || '?'}]</strong> ${data.title}
+                        <span class="admin-status ${statusClass}">${statusText}</span>
+                    </td>
                     <td class="actions-cell">
                         <button class="edit-btn" data-id="${id}" style="background:#dfac12; color:#2c2c2c; font-weight:bold;">Editar</button>
                         <button class="delete-btn" data-id="${id}" style="background:#c5221f;">Borrar</button>
@@ -374,7 +406,7 @@
                 adminTableBody.appendChild(row);
             });
 
-            // Re-asignar eventos a los botones de Eliminar
+            // Botones de Eliminar
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const docId = e.target.getAttribute('data-id');
@@ -387,7 +419,7 @@
                 });
             });
 
-            // Re-asignar eventos a los botones de Editar
+            // Botones de Editar
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const docId = e.target.getAttribute('data-id');
@@ -406,12 +438,11 @@
                 localStickersArray.push({ id, data });
             });
 
-            // Al recibir cambios de Firebase, refresca la tienda y la lista de admin respetando búsquedas activas
             filterPublicCatalog();
             filterAdminInventory();
         });
 
-        // Función para preparar el formulario para Editar
+        // Preparar el formulario para Editar
         function prepareEdit(docId) {
             const target = localStickersArray.find(item => item.id === docId);
             if(!target) return;
@@ -493,7 +524,6 @@
                     alert("¡Calcomanía guardada con éxito!");
                 }
                 resetFormState();
-                // 👁️ REMOVIDO: window.closeAdminModal() para que NO te saque del menú
             } catch (error) {
                 alert("Error de base de datos: " + error.message);
             }
