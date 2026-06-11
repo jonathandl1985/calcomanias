@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración - Control de Streaming</title>
+    <title>Panel de Administración - Acceso Restringido</title>
     <style>
         :root {
             --bg-admin: #f4f6f9;
@@ -14,11 +14,7 @@
             --border-admin: #e2e8f0;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -37,32 +33,22 @@
             padding: 30px;
         }
 
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 8px;
-            color: var(--primary);
-            font-weight: 700;
+        .login-box {
+            max-width: 400px;
+            margin: 100px auto 0 auto;
+            background-color: var(--surface-admin);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-admin);
+            padding: 30px;
         }
 
-        .subtitle {
-            color: #718096;
-            font-size: 0.95rem;
-            margin-bottom: 30px;
-        }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; color: var(--primary); font-weight: 700; }
+        .subtitle { color: #718096; font-size: 0.95rem; margin-bottom: 30px; }
+        .form-group { margin-bottom: 22px; }
+        label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: var(--primary); }
 
-        .form-group {
-            margin-bottom: 22px;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-            color: var(--primary);
-        }
-
-        input[type="text"], textarea {
+        input[type="text"], input[type="email"], input[type="password"], textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid var(--border-admin);
@@ -71,26 +57,16 @@
             background-color: #f8fafc;
             color: var(--text-dark);
             outline: none;
-            transition: border-color 0.2s, background-color 0.2s;
         }
 
-        input[type="text"]:focus, textarea:focus {
+        input:focus, textarea:focus {
             border-color: var(--accent);
             background-color: #fff;
             box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
         }
 
-        textarea {
-            height: 120px;
-            resize: vertical;
-            font-family: inherit;
-        }
-
-        .help-text {
-            font-size: 0.8rem;
-            color: #a0aec0;
-            margin-top: 5px;
-        }
+        textarea { height: 120px; resize: vertical; }
+        .help-text { font-size: 0.8rem; color: #a0aec0; margin-top: 5px; }
 
         .btn-submit {
             display: inline-block;
@@ -103,13 +79,17 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
             margin-top: 10px;
         }
-
-        .btn-submit:hover {
-            background-color: #2b6cb0;
+        .btn-submit:hover { background-color: #2b6cb0; }
+        
+        .btn-logout {
+            background-color: #e53e3e;
+            float: right;
+            padding: 8px 14px;
+            font-size: 0.85rem;
         }
+        .btn-logout:hover { background-color: #c53030; }
 
         .alert-success {
             background-color: #c6f6d5;
@@ -121,11 +101,30 @@
             font-weight: 500;
             display: none;
         }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="admin-box">
+    <div id="section-login" class="login-box">
+        <h1>Iniciar Sesión</h1>
+        <p class="subtitle">Solo administradores autorizados.</p>
+        
+        <div class="form-group">
+            <label for="login-email">Correo Electrónico</label>
+            <input type="email" id="login-email" placeholder="admin@tusitio.com">
+        </div>
+        <div class="form-group">
+            <label for="login-password">Contraseña (Clave)</label>
+            <input type="password" id="login-password" placeholder="******">
+        </div>
+        <button class="btn-submit" id="btn-login-submit">Ingresar al Panel</button>
+    </div>
+
+
+    <div id="section-panel" class="admin-box hidden">
+        <button class="btn-submit btn-logout" id="btn-logout">Cerrar Sesión</button>
         <h1>Panel de Control de Streaming</h1>
         <p class="subtitle">Gestiona la señal de video y los bloques de contenidos laterales en tiempo real.</p>
         
@@ -135,18 +134,18 @@
 
         <div class="form-group">
             <label for="input-stream-url">Dirección URL de Incrustación (Embed Stream URL)</label>
-            <input type="text" id="input-stream-url" placeholder="Ej: https://www.youtube.com/embed/LIVE_VIDEO_ID o enlace Twitch embed">
+            <input type="text" id="input-stream-url" placeholder="Ej: https://www.youtube.com/embed/LIVE_VIDEO_ID">
             <p class="help-text">Inserta solo la URL directa que va dentro del 'src' del iframe.</p>
         </div>
 
         <div class="form-group">
-            <label for="input-news-left">Noticias (Bloque Lateral Izquierdo) - Soporta etiquetas HTML</label>
-            <textarea id="input-news-left" placeholder="Ej: <h3>¡Nuevo Lanzamiento!</h3> <p>Sigue la transmisión en vivo.</p>"></textarea>
+            <label for="input-news-left">Noticias (Bloque Lateral Izquierdo) - Soporta HTML</label>
+            <textarea id="input-news-left" placeholder="Contenido izquierdo..."></textarea>
         </div>
 
         <div class="form-group">
-            <label for="input-news-right">Fotografías o Destacados (Bloque Lateral Derecho) - Soporta etiquetas HTML</label>
-            <textarea id="input-news-right" placeholder="Ej: <img src='https://tusitio.com/anuncio.jpg' style='width:100%; border-radius:6px;'>"></textarea>
+            <label for="input-news-right">Fotografías o Destacados (Bloque Lateral Derecho) - Soporta HTML</label>
+            <textarea id="input-news-right" placeholder="Contenido derecho..."></textarea>
         </div>
 
         <button class="btn-submit" id="btn-save-config">Actualizar Cambios en Vivo</button>
@@ -155,8 +154,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // CONFIGURACIÓN DE TU FIREBASE (Mismos valores que index.html)
+        // CONFIGURACIÓN DE TU FIREBASE (Usa tus mismos datos)
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
@@ -169,6 +169,15 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        // ELEMENTOS DOM
+        const sectionLogin = document.getElementById('section-login');
+        const sectionPanel = document.getElementById('section-panel');
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        const btnLoginSubmit = document.getElementById('btn-login-submit');
+        const btnLogout = document.getElementById('btn-logout');
 
         const inputStreamUrl = document.getElementById('input-stream-url');
         const inputNewsLeft = document.getElementById('input-news-left');
@@ -176,17 +185,57 @@
         const btnSaveConfig = document.getElementById('btn-save-config');
         const successAlert = document.getElementById('success-alert');
 
-        // Obtener configuración inicial
-        onValue(ref(db, 'live_config'), (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                inputStreamUrl.value = data.streamUrl || '';
-                inputNewsLeft.value = data.newsLeft || '';
-                inputNewsRight.value = data.newsRight || '';
+        // RESTRICCIÓN: Introduce AQUÍ el correo que vas a usar como administrador
+        const EMAIL_ADMINISTRADOR = "tu_correo_admin@dominio.com";
+
+        // 1. COMPROBAR SI EL USUARIO ESTÁ LOGUEADO Y ES EL ADMIN
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.email === EMAIL_ADMINISTRADOR) {
+                // Es el administrador verificado, mostrar panel y ocultar login
+                sectionLogin.classList.add('hidden');
+                sectionPanel.classList.remove('hidden');
+                cargarDatosPanel();
+            } else {
+                // No está logueado o no es el admin, forzar vista de login
+                sectionLogin.classList.remove('hidden');
+                sectionPanel.classList.add('hidden');
             }
         });
 
-        // Guardar la configuración al presionar el botón
+        // 2. EJECUTAR INICIO DE SESIÓN
+        btnLoginSubmit.addEventListener('click', () => {
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value;
+
+            if(email !== EMAIL_ADMINISTRADOR) {
+                alert("Este correo no tiene permisos de administrador.");
+                return;
+            }
+
+            signInWithEmailAndPassword(auth, email, password)
+                .catch((error) => {
+                    console.error(error);
+                    alert("Clave incorrecta o error de acceso: " + error.message);
+                });
+        });
+
+        // 3. CERRAR SESIÓN
+        btnLogout.addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // 4. FUNCIONES PROPIAS DEL PANEL (SOLO CORREN SI ESTÁ LOGUEADO)
+        function cargarDatosPanel() {
+            onValue(ref(db, 'live_config'), (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    inputStreamUrl.value = data.streamUrl || '';
+                    inputNewsLeft.value = data.newsLeft || '';
+                    inputNewsRight.value = data.newsRight || '';
+                }
+            });
+        }
+
         btnSaveConfig.addEventListener('click', () => {
             const url = inputStreamUrl.value.trim();
             const left = inputNewsLeft.value.trim();
@@ -202,8 +251,7 @@
                 setTimeout(() => { successAlert.style.display = 'none'; }, 4000);
             })
             .catch((error) => {
-                console.error("Error Firebase:", error);
-                alert("Error de conexión/permisos: " + error.message);
+                alert("Error al guardar cambios: " + error.message);
             });
         });
     </script>
