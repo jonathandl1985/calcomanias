@@ -3,280 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda de Calcomanías del Mundial</title>
+    <title>Plataforma de Streaming</title>
     <style>
-        :root {
-            --primary: #8a1538; 
-            --accent: #dfac12; 
-            --dark: #2c2c2c;
-            --light: #f4f4f4;
-            --whatsapp: #25D366;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0; padding: 0;
-            background-color: var(--light); color: var(--dark);
-        }
-
-        header {
-            background-color: var(--primary); color: white;
-            text-align: center; padding: 2rem; position: relative;
-        }
-
-        header h1 { margin: 0; font-size: 2.5rem; }
-        header p { margin: 5px 0 0 0; color: var(--accent); font-weight: bold; }
-
-        /* Contenedor de botones en el encabezado */
-        .header-buttons {
-            position: absolute; top: 20px; right: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .header-btn {
-            color: white; border: 1px solid white; padding: 8px 15px;
-            cursor: pointer; border-radius: 5px; font-weight: bold;
-            text-decoration: none; font-size: 0.9rem;
-            display: inline-flex; align-items: center; justify-content: center;
-            transition: background 0.3s, transform 0.2s;
-        }
-        .header-btn:hover { transform: translateY(-2px); }
-
-        .btn-admin-nav { background: rgba(255,255,255,0.2); }
-        .btn-whatsapp-nav { background: var(--whatsapp); border-color: var(--whatsapp); }
-        .btn-whatsapp-nav:hover { background: #1ebd58; border-color: #1ebd58; }
-
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-
-        /* Barras de Búsqueda */
-        .search-container {
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .search-bar {
-            width: 100%;
-            max-width: 600px;
-            padding: 15px 20px;
-            font-size: 1.1rem;
-            border: 2px solid #ddd;
-            border-radius: 30px;
-            outline: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: border-color 0.3s;
-        }
-        .search-bar:focus { border-color: var(--primary); }
-
-        .admin-search-bar {
-            width: 100%; padding: 10px 15px; margin-bottom: 15px;
-            font-size: 0.95rem; border: 1px solid #ccc; border-radius: 6px;
-            outline: none; box-sizing: border-box;
-        }
-        .admin-search-bar:focus { border-color: var(--primary); }
-
-        /* Catálogo */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 30px;
-        }
-
-        .card {
-            background: white; border-radius: 12px; overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.3s;
-            display: flex; flex-direction: column;
-        }
-        .card:hover { transform: translateY(-5px); }
-        
-        .card img { 
-            width: 100%; height: 250px; object-fit: contain; 
-            background-color: #fcfcfc; border-bottom: 1px solid #eee;
-            padding: 10px; box-sizing: border-box;
-        }
-        
-        .card-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
-        
-        .team-tag {
-            background: #eee; color: #555; padding: 4px 8px; font-size: 0.8rem;
-            border-radius: 4px; font-weight: bold; width: fit-content; margin-bottom: 8px;
-            text-transform: uppercase; letter-spacing: 0.5px;
-        }
-
-        .card-title { font-size: 1.4rem; margin: 0 0 10px 0; color: var(--primary); }
-        .card-desc { font-size: 0.9rem; color: #666; flex-grow: 1; margin-bottom: 15px; }
-        
-        /* Etiquetas de Estado Públicas y de Admin */
-        .status {
-            display: inline-block; padding: 5px 10px; border-radius: 20px;
-            font-size: 0.8rem; font-weight: bold; margin-bottom: 15px; width: fit-content;
-        }
-        .admin-status {
-            display: inline-block; padding: 3px 8px; border-radius: 12px;
-            font-size: 0.75rem; font-weight: bold; margin-left: 5px;
-        }
-        .instock { background: #e6f4ea; color: #137333; }
-        .outstock { background: #fce8e6; color: #c5221f; }
-
-        .price { font-size: 1.6rem; font-weight: bold; color: var(--dark); margin-bottom: 15px; }
-
-        .whatsapp-btn {
-            background-color: var(--whatsapp); color: white; text-align: center;
-            padding: 12px; text-decoration: none; border-radius: 8px;
-            font-weight: bold; display: flex; align-items: center;
-            justify-content: center; gap: 10px; transition: background 0.3s;
-        }
-        .whatsapp-btn:hover { background-color: #1ebd58; }
-
-        /* Modales */
-        .modal {
-            display: none; position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); justify-content: center;
-            align-items: center; z-index: 1000;
-        }
-
-        .modal-content {
-            background: white; padding: 30px; border-radius: 12px;
-            width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto;
-        }
-
-        .modal h2 { margin-top: 0; color: var(--primary); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;
-        }
-
-        .btn-block { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;}
-        .btn-success { background: var(--primary); color: white; }
-        .btn-danger { background: #c5221f; color: white; }
-        .btn-warn { background: var(--accent); color: var(--dark); }
-
-        .admin-list { width: 100%; margin-top: 10px; border-collapse: collapse; }
-        .admin-list th, .admin-list td { padding: 10px; border: 1px solid #ddd; text-align: left; font-size: 0.9rem;}
-        .admin-list th { background: #f4f4f4; }
-        
-        .loading { text-align: center; font-size: 1.5rem; color: #666; margin-top: 50px; width: 100%; }
-
-        .admin-only { display: none; }
-        
-        .actions-cell { display: flex; gap: 5px; }
-        .actions-cell button { border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; color: white; font-size: 0.8rem;}
-
-        /* Ajuste para pantallas móviles */
-        @media (max-width: 600px) {
-            header { padding-bottom: 4.5rem; }
-            .header-buttons { position: absolute; bottom: 15px; top: auto; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); justify-content: center; }
-            .header-btn { flex-grow: 1; font-size: 0.8rem; padding: 8px 10px; }
-        }
+        body { font-family: Arial, sans-serif; margin: 0; background-color: #121212; color: white; }
+        .container { display: grid; grid-template-columns: 250px 1fr 250px; gap: 15px; padding: 20px; }
+        .sidebar { background: #1e1e1e; padding: 15px; border-radius: 8px; min-height: 400px; }
+        .main-content { display: flex; flex-direction: column; gap: 15px; }
+        .stream-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; border-radius: 8px; }
+        .stream-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+        .chat-section { background: #1e1e1e; padding: 15px; border-radius: 8px; height: 300px; display: flex; flex-direction: column; }
+        .chat-messages { flex-grow: 1; overflow-y: auto; border-bottom: 1px solid #333; margin-bottom: 10px; padding-bottom: 10px; }
+        .chat-input { display: flex; gap: 10px; }
+        .chat-input input { flex-grow: 1; padding: 8px; border-radius: 4px; border: none; }
+        .btn { padding: 8px 15px; background: #e50914; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Mundial Sticker Shop</h1>
-        <p>¡Completa tu álbum con nosotros, compra, intercambia o vende, para mas info. Contáctanos!</p>
-        
-        <div class="header-buttons">
-            <a href="#" id="topWhatsAppBtn" target="_blank" class="header-btn btn-whatsapp-nav">💬 Contáctanos</a>
-            <button class="header-btn btn-admin-nav" id="headerAdminBtn" onclick="openAdminModal()">⚙️ Administrar</button>
-        </div>
-    </header>
-
     <div class="container">
-        <div class="search-container">
-            <input type="text" id="searchBar" class="search-bar" placeholder="Buscar por jugador o selección (ej: Messi, Argentina)...">
-        </div>
+        <aside class="sidebar" id="noticias-left">
+            <h3>Noticias</h3>
+            <div id="content-left">Cargando...</div>
+        </aside>
 
-        <div id="catalog" class="grid">
-            <p class="loading">Cargando calcomanías...</p>
-        </div>
-    </div>
-
-    <div id="adminModal" class="modal">
-        <div class="modal-content">
+        <main class="main-content">
+            <div class="stream-container">
+                <iframe id="live-stream" src="" allowfullscreen></iframe>
+            </div>
             
-            <div id="loginSection">
-                <h2>Iniciar Sesión como Admin</h2>
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label>Correo Electrónico</label>
-                        <input type="email" id="loginEmail" required placeholder="admin@correo.com">
+            <section class="chat-section">
+                <h3>Chat en Vivo</h3>
+                <div id="auth-block">
+                    <button class="btn" id="btn-login">Iniciar sesión con Google</button>
+                </div>
+                <div id="chat-block" class="hidden">
+                    <div class="chat-messages" id="chat-messages"></div>
+                    <div class="chat-input">
+                        <input type="text" id="input-msg" placeholder="Escribe un mensaje...">
+                        <button class="btn" id="btn-send">Enviar</button>
                     </div>
-                    <div class="form-group">
-                        <label>Contraseña</label>
-                        <input type="password" id="loginPassword" required placeholder="******">
-                    </div>
-                    <button type="submit" class="btn-block btn-success">Ingresar</button>
-                </form>
-            </div>
+                </div>
+            </section>
+        </main>
 
-            <div id="panelSection" class="admin-only">
-                <h2 id="panelTitle">Agregar Nueva Calcomanía</h2>
-                <button class="btn-danger" id="logoutBtn" style="padding: 5px 10px; float: right; margin-top: -40px;">Cerrar Sesión</button>
-                
-                <form id="stickerForm">
-                    <input type="hidden" id="stickerId">
-
-                    <div class="form-group">
-                        <label>Nombre de la Calcomanía / Jugador</label>
-                        <input type="text" id="title" required placeholder="Ej: Lionel Messi - Oro">
-                    </div>
-                    <div class="form-group">
-                        <label>Selección / País</label>
-                        <input type="text" id="team" required placeholder="Ej: Argentina">
-                    </div>
-                    <div class="form-group">
-                        <label>Descripción</label>
-                        <textarea id="desc" rows="2"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>URL de la Imagen</label>
-                        <input type="url" id="imgUrl" required placeholder="https://enlace.com/imagen.jpg">
-                    </div>
-                    <div class="form-group">
-                        <label>Precio</label>
-                        <input type="text" id="price" required placeholder="Ej: $5.00">
-                    </div>
-                    <div class="form-group">
-                        <label>Disponibilidad</label>
-                        <select id="status">
-                            <option value="true">Disponible</option>
-                            <option value="false">Agotado</option>
-                        </select>
-                    </div>
-                    <button type="submit" id="submitFormBtn" class="btn-block btn-success">Guardar en la Nube</button>
-                    <button type="button" id="cancelEditBtn" class="btn-block" style="background:#bbb; display:none; color:black;">Cancelar Edición</button>
-                </form>
-
-                <hr style="margin: 30px 0;">
-                
-                <h3>Inventario Actual</h3>
-                <input type="text" id="adminSearchBar" class="admin-search-bar" placeholder="Filtrar inventario por nombre o país...">
-                
-                <table class="admin-list">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminTableBody"></tbody>
-                </table>
-            </div>
-
-            <button class="btn-block" onclick="closeAdminModal()" style="background: #666; color: white; margin-top: 15px;">Cerrar Ventana</button>
-        </div>
+        <aside class="sidebar" id="noticias-right">
+            <h3>Destacados</h3>
+            <div id="content-right">Cargando...</div>
+        </aside>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, updateDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
 
-       
+        // Configuración de tu proyecto Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
@@ -287,251 +69,73 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const db = getDatabase(app);
         const auth = getAuth(app);
-        const stickersCollection = collection(db, "stickers");
+        const provider = new GoogleAuthProvider();
 
-        const WHATSAPP_NUMBER = "50250103703"; //
+        // 1. ESCUCHAR CAMBIOS DEL PANEL DE ADMINISTRACIÓN
+        onValue(ref(db, 'config'), (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                document.getElementById('live-stream').src = data.streamUrl || '';
+                document.getElementById('content-left').innerHTML = data.noticiasLeft || 'Sin noticias.';
+                document.getElementById('content-right').innerHTML = data.noticiasRight || 'Sin contenido.';
+            }
+        });
 
-      
-        const generalWpMessage = encodeURIComponent("Hola, visité tu tienda de calcomanías y tengo una consulta general.");
-        document.getElementById('topWhatsAppBtn').href = `https://wa.me/${WHATSAPP_NUMBER}?text=${generalWpMessage}`;
+        // 2. AUTENTICACIÓN PARA EL CHAT
+        const btnLogin = document.getElementById('btn-login');
+        const authBlock = document.getElementById('auth-block');
+        const chatBlock = document.getElementById('chat-block');
+        let currentUser = null;
 
-        
-        const catalog = document.getElementById('catalog');
-        const adminTableBody = document.getElementById('adminTableBody');
-        const loginSection = document.getElementById('loginSection');
-        const panelSection = document.getElementById('panelSection');
-        const headerAdminBtn = document.getElementById('headerAdminBtn');
-        const searchBar = document.getElementById('searchBar');
-        const adminSearchBar = document.getElementById('adminSearchBar');
-        
-        const stickerForm = document.getElementById('stickerForm');
-        const stickerIdInput = document.getElementById('stickerId');
-        const panelTitle = document.getElementById('panelTitle');
-        const submitFormBtn = document.getElementById('submitFormBtn');
-        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        btnLogin.addEventListener('click', () => {
+            signInWithPopup(auth, provider).catch(error => console.error(error));
+        });
 
-        let localStickersArray = []; 
-        let isEditing = false;
-
-        // Monitorear Autenticación
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                loginSection.style.display = 'none';
-                panelSection.style.display = 'block';
-                headerAdminBtn.textContent = "⚙️ Panel Activo";
+                currentUser = user;
+                authBlock.classList.add('hidden');
+                chatBlock.classList.remove('hidden');
             } else {
-                loginSection.style.display = 'block';
-                panelSection.style.display = 'none';
-                headerAdminBtn.textContent = "⚙️ Administrar";
-                resetFormState();
+                authBlock.classList.remove('hidden');
+                chatBlock.classList.add('hidden');
             }
         });
 
-        // Evento: Iniciar Sesión
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const pass = document.getElementById('loginPassword').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                alert("¡Bienvenido Administrador!");
-            } catch (error) {
-                alert("Acceso denegado. Datos incorrectos.");
-            }
+        // 3. FUNCIONALIDAD DEL CHAT
+        const btnSend = document.getElementById('btn-send');
+        const inputMsg = document.getElementById('input-msg');
+        const chatMessages = document.getElementById('chat-messages');
+
+        btnSend.addEventListener('click', enviarMensaje);
+        inputMsg.addEventListener('keypress', (e) => { if(e.key === 'Enter') enviarMensaje(); });
+
+        function enviarMensaje() {
+            const text = inputMsg.value.trim();
+            if(text === '' || !currentUser) return;
+
+            push(ref(db, 'chat'), {
+                name: currentUser.displayName,
+                text: text,
+                timestamp: Date.now()
+            });
+            inputMsg.value = '';
+        }
+
+        // Escuchar nuevos mensajes del chat
+        onValue(ref(db, 'chat'), (snapshot) => {
+            chatMessages.innerHTML = '';
+            snapshot.forEach((childSnapshot) => {
+                const msg = childSnapshot.val();
+                const p = document.createElement('p');
+                p.innerHTML = `<strong>${msg.name}:</strong> ${msg.text}`;
+                chatMessages.appendChild(p);
+            });
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll al final
         });
-
-        // Evento: Cerrar Sesión
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            signOut(auth).then(() => alert("Sesión cerrada"));
-        });
-
-        // Dibujar las Tarjetas en la Tienda Pública
-        function displayStickers(stickersToDisplay) {
-            catalog.innerHTML = '';
-
-            if(stickersToDisplay.length === 0) {
-                catalog.innerHTML = '<p class="loading">No se encontraron calcomanías.</p>';
-                return;
-            }
-
-            stickersToDisplay.forEach((item) => {
-                const sticker = item.data;
-                
-                const card = document.createElement('div');
-                card.className = 'card';
-                const statusClass = sticker.status ? 'instock' : 'outstock';
-                const statusText = sticker.status ? 'Disponible' : 'Agotado';
-                const wpMessage = encodeURIComponent(`Hola, quiero comprar la calcomanía de *${sticker.title}* (${sticker.team}) por ${sticker.price}.`);
-                
-                card.innerHTML = `
-                    <img src="${sticker.imgUrl}">
-                    <div class="card-content">
-                        <span class="team-tag">📍 ${sticker.team || 'Mundial'}</span>
-                        <h3 class="card-title">${sticker.title}</h3>
-                        <p class="card-desc">${sticker.desc || ''}</p>
-                        <span class="status ${statusClass}">${statusText}</span>
-                        <div class="price">${sticker.price}</div>
-                        ${sticker.status ? `<a href="https://wa.me/${WHATSAPP_NUMBER}?text=${wpMessage}" target="_blank" class="whatsapp-btn">💬 Comprar por WhatsApp</a>` : `<button class="whatsapp-btn" style="background:#ccc;" disabled>Agotado</button>`}
-                    </div>
-                `;
-                catalog.appendChild(card);
-            });
-        }
-
-        // ⚙️ Renderizar la tabla de administración con indicación de Estado
-        function displayAdminTable(stickersToDisplay) {
-            adminTableBody.innerHTML = '';
-            
-            stickersToDisplay.forEach((item) => {
-                const id = item.id;
-                const data = item.data;
-
-                // Definir colores y texto del estado para el administrador
-                const statusClass = data.status ? 'instock' : 'outstock';
-                const statusText = data.status ? 'Disponible' : 'Agotado';
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>
-                        <strong>[${data.team || '?'}]</strong> ${data.title}
-                        <span class="admin-status ${statusClass}">${statusText}</span>
-                    </td>
-                    <td class="actions-cell">
-                        <button class="edit-btn" data-id="${id}" style="background:#dfac12; color:#2c2c2c; font-weight:bold;">Editar</button>
-                        <button class="delete-btn" data-id="${id}" style="background:#c5221f;">Borrar</button>
-                    </td>
-                `;
-                adminTableBody.appendChild(row);
-            });
-
-            // Botones de Eliminar
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const docId = e.target.getAttribute('data-id');
-                    if(confirm("¿Seguro que deseas eliminar este artículo?")) {
-                        try {
-                            await deleteDoc(doc(db, "stickers", docId));
-                            if(stickerIdInput.value === docId) resetFormState();
-                        } catch (err) { alert("Error de permisos."); }
-                    }
-                });
-            });
-
-            // Botones de Editar
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const docId = e.target.getAttribute('data-id');
-                    prepareEdit(docId);
-                });
-            });
-        }
-
-        // Sincronización en tiempo real con Firebase
-        onSnapshot(stickersCollection, (snapshot) => {
-            localStickersArray = [];
-
-            snapshot.forEach((documento) => {
-                const id = documento.id;
-                const data = documento.data();
-                localStickersArray.push({ id, data });
-            });
-
-            filterPublicCatalog();
-            filterAdminInventory();
-        });
-
-        // Preparar el formulario para Editar
-        function prepareEdit(docId) {
-            const target = localStickersArray.find(item => item.id === docId);
-            if(!target) return;
-
-            stickerIdInput.value = target.id;
-            document.getElementById('title').value = target.data.title;
-            document.getElementById('team').value = target.data.team || '';
-            document.getElementById('desc').value = target.data.desc || '';
-            document.getElementById('imgUrl').value = target.data.imgUrl;
-            document.getElementById('price').value = target.data.price;
-            document.getElementById('status').value = target.data.status ? "true" : "false";
-
-            isEditing = true;
-            panelTitle.textContent = "✏️ Editando Calcomanía";
-            submitFormBtn.textContent = "Actualizar Calcomanía";
-            submitFormBtn.className = "btn-block btn-warn";
-            cancelEditBtn.style.display = "block";
-            
-            document.querySelector('.modal-content').scrollTop = 0;
-        }
-
-        // Resetear Formulario
-        function resetFormState() {
-            isEditing = false;
-            stickerForm.reset();
-            stickerIdInput.value = "";
-            panelTitle.textContent = "Agregar Nueva Calcomanía";
-            submitFormBtn.textContent = "Guardar en la Nube";
-            submitFormBtn.className = "btn-block btn-success";
-            cancelEditBtn.style.display = "none";
-        }
-
-        cancelEditBtn.addEventListener('click', resetFormState);
-
-        // LÓGICA DE FILTRADO (Tienda Pública)
-        function filterPublicCatalog() {
-            const text = searchBar.value.toLowerCase().trim();
-            const filtered = localStickersArray.filter(item => {
-                const title = (item.data.title || '').toLowerCase();
-                const team = (item.data.team || '').toLowerCase();
-                return title.includes(text) || team.includes(text);
-            });
-            displayStickers(filtered);
-        }
-        searchBar.addEventListener('input', filterPublicCatalog);
-
-        // LÓGICA DE FILTRADO (Inventario de Administración)
-        function filterAdminInventory() {
-            const text = adminSearchBar.value.toLowerCase().trim();
-            const filtered = localStickersArray.filter(item => {
-                const title = (item.data.title || '').toLowerCase();
-                const team = (item.data.team || '').toLowerCase();
-                return title.includes(text) || team.includes(text);
-            });
-            displayAdminTable(filtered);
-        }
-        adminSearchBar.addEventListener('input', filterAdminInventory);
-
-        // Guardar o Editar mediante Submit
-        stickerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const stickerData = {
-                title: document.getElementById('title').value,
-                team: document.getElementById('team').value,
-                desc: document.getElementById('desc').value,
-                imgUrl: document.getElementById('imgUrl').value,
-                price: document.getElementById('price').value,
-                status: document.getElementById('status').value === "true"
-            };
-
-            try {
-                if (isEditing) {
-                    const id = stickerIdInput.value;
-                    await updateDoc(doc(db, "stickers", id), stickerData);
-                    alert("¡Calcomanía actualizada correctamente!");
-                } else {
-                    await addDoc(stickersCollection, stickerData);
-                    alert("¡Calcomanía guardada con éxito!");
-                }
-                resetFormState();
-            } catch (error) {
-                alert("Error de base de datos: " + error.message);
-            }
-        });
-
-        // Modales Globales
-        window.openAdminModal = () => document.getElementById('adminModal').style.display = 'flex';
-        window.closeAdminModal = () => document.getElementById('adminModal').style.display = 'none';
     </script>
 </body>
 </html>
+
