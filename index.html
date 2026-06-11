@@ -3,65 +3,279 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plataforma de Streaming</title>
+    <title>Plataforma de Streaming en Vivo</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; background-color: #121212; color: white; }
-        .container { display: grid; grid-template-columns: 250px 1fr 250px; gap: 15px; padding: 20px; }
-        .sidebar { background: #1e1e1e; padding: 15px; border-radius: 8px; min-height: 400px; }
-        .main-content { display: flex; flex-direction: column; gap: 15px; }
-        .stream-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; border-radius: 8px; }
-        .stream-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-        .chat-section { background: #1e1e1e; padding: 15px; border-radius: 8px; height: 300px; display: flex; flex-direction: column; }
-        .chat-messages { flex-grow: 1; overflow-y: auto; border-bottom: 1px solid #333; margin-bottom: 10px; padding-bottom: 10px; }
-        .chat-input { display: flex; gap: 10px; }
-        .chat-input input { flex-grow: 1; padding: 8px; border-radius: 4px; border: none; }
-        .btn { padding: 8px 15px; background: #e50914; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .hidden { display: none; }
+        :root {
+            --bg-color: #0f0f11;
+            --surface-color: #16161a;
+            --surface-accent: #222227;
+            --primary-color: #ff3366;
+            --text-color: #efefef;
+            --text-muted: #94a3b8;
+            --border-color: #2a2a35;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: block;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--surface-color);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--text-color);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .main-layout {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 15px;
+            padding: 5px;
+        }
+
+        .sidebar {
+            display: table-cell;
+            width: 280px;
+            vertical-align: top;
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--text-color);
+        }
+
+        .sidebar-content {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+
+        .sidebar-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .center-content {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            background-color: #000;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .chat-container {
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container h2 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+
+        .chat-message {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .chat-message .username {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-right: 5px;
+        }
+
+        .chat-login-prompt {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+        }
+
+        .chat-login-prompt p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-area input {
+            flex-grow: 1;
+            background-color: var(--surface-accent);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .chat-input-area input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #e02454;
+        }
+
+        .btn-google {
+            background-color: #4285f4;
+        }
+        .btn-google:hover {
+            background-color: #357ae8;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 900px) {
+            .main-layout, .sidebar, .center-content {
+                display: block;
+                width: 100%;
+            }
+            .sidebar {
+                margin-bottom: 15px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <aside class="sidebar" id="noticias-left">
-            <h3>Noticias</h3>
-            <div id="content-left">Cargando...</div>
+    <header>
+        <h1>Transmisión en Vivo Oficial</h1>
+    </header>
+
+    <div class="main-layout">
+        <aside class="sidebar">
+            <h2>Noticias</h2>
+            <div class="sidebar-content" id="news-left-container">
+                Cargando últimas noticias...
+            </div>
         </aside>
 
-        <main class="main-content">
-            <div class="stream-container">
-                <iframe id="live-stream" src="" allowfullscreen></iframe>
+        <div class="center-content">
+            <div class="video-container">
+                <iframe id="stream-player" src="" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
             </div>
-            
-            <section class="chat-section">
-                <h3>Chat en Vivo</h3>
-                <div id="auth-block">
-                    <button class="btn" id="btn-login">Iniciar sesión con Google</button>
+
+            <div class="chat-container">
+                <h2>Chat en Vivo</h2>
+                
+                <div id="chat-anonymous" class="chat-login-prompt">
+                    <p>Inicia sesión para participar en el chat en tiempo real.</p>
+                    <button class="btn btn-google" id="btn-login-google">Iniciar sesión con Google</button>
                 </div>
-                <div id="chat-block" class="hidden">
-                    <div class="chat-messages" id="chat-messages"></div>
-                    <div class="chat-input">
-                        <input type="text" id="input-msg" placeholder="Escribe un mensaje...">
-                        <button class="btn" id="btn-send">Enviar</button>
+
+                <div id="chat-active" class="hidden" style="display: flex; flex-direction: column; flex-grow: 1;">
+                    <div class="chat-messages" id="chat-messages-box"></div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input-field" placeholder="Escribe un mensaje aquí...">
+                        <button class="btn" id="btn-send-message">Enviar</button>
                     </div>
                 </div>
-            </section>
-        </main>
+            </div>
+        </div>
 
-        <aside class="sidebar" id="noticias-right">
-            <h3>Destacados</h3>
-            <div id="content-right">Cargando...</div>
+        <aside class="sidebar">
+            <h2>Destacados</h2>
+            <div class="sidebar-content" id="news-right-container">
+                Cargando contenido destacado...
+            </div>
         </aside>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // Configuración de tu proyecto Firebase
+        // CONFIGURACIÓN DE TU FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
+            databaseURL: "https://calcos-6760b-default-rtdb.firebaseio.com",
             projectId: "calcos-6760b",
             storageBucket: "calcos-6760b.firebasestorage.app",
             messagingSenderId: "20210064860",
@@ -71,71 +285,93 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
+        const googleProvider = new GoogleAuthProvider();
 
-        // 1. ESCUCHAR CAMBIOS DEL PANEL DE ADMINISTRACIÓN
-        onValue(ref(db, 'config'), (snapshot) => {
+        const streamPlayer = document.getElementById('stream-player');
+        const newsLeftContainer = document.getElementById('news-left-container');
+        const newsRightContainer = document.getElementById('news-right-container');
+        const chatAnonymous = document.getElementById('chat-anonymous');
+        const chatActive = document.getElementById('chat-active');
+        const chatMessagesBox = document.getElementById('chat-messages-box');
+        const chatInputField = document.getElementById('chat-input-field');
+        const btnSendMessage = document.getElementById('btn-send-message');
+        const btnLoginGoogle = document.getElementById('btn-login-google');
+
+        let userLogueado = null;
+
+        // 1. SINCRONIZACIÓN EN TIEMPO REAL DESDE EL PANEL DE CONTROL
+        onValue(ref(db, 'live_config'), (snapshot) => {
             const data = snapshot.val();
-            if(data) {
-                document.getElementById('live-stream').src = data.streamUrl || '';
-                document.getElementById('content-left').innerHTML = data.noticiasLeft || 'Sin noticias.';
-                document.getElementById('content-right').innerHTML = data.noticiasRight || 'Sin contenido.';
+            if (data) {
+                if (data.streamUrl) streamPlayer.src = data.streamUrl;
+                newsLeftContainer.innerHTML = data.newsLeft || "No hay noticias recientes.";
+                newsRightContainer.innerHTML = data.newsRight || "No hay contenido destacado.";
+            } else {
+                newsLeftContainer.innerHTML = "Esperando actualización del administrador...";
+                newsRightContainer.innerHTML = "Esperando actualización del administrador...";
             }
         });
 
-        // 2. AUTENTICACIÓN PARA EL CHAT
-        const btnLogin = document.getElementById('btn-login');
-        const authBlock = document.getElementById('auth-block');
-        const chatBlock = document.getElementById('chat-block');
-        let currentUser = null;
-
-        btnLogin.addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch(error => console.error(error));
+        // 2. SISTEMA DE AUTENTICACIÓN (GOOGLE)
+        btnLoginGoogle.addEventListener('click', () => {
+            signInWithPopup(auth, googleProvider).catch(err => {
+                console.error("Error al autenticar con Google:", err);
+                alert("No se pudo iniciar sesión: " + err.message);
+            });
         });
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                currentUser = user;
-                authBlock.classList.add('hidden');
-                chatBlock.classList.remove('hidden');
+                userLogueado = user;
+                chatAnonymous.classList.add('hidden');
+                chatActive.classList.remove('hidden');
             } else {
-                authBlock.classList.remove('hidden');
-                chatBlock.classList.add('hidden');
+                userLogueado = null;
+                chatAnonymous.classList.remove('hidden');
+                chatActive.classList.add('hidden');
             }
         });
 
-        // 3. FUNCIONALIDAD DEL CHAT
-        const btnSend = document.getElementById('btn-send');
-        const inputMsg = document.getElementById('input-msg');
-        const chatMessages = document.getElementById('chat-messages');
-
-        btnSend.addEventListener('click', enviarMensaje);
-        inputMsg.addEventListener('keypress', (e) => { if(e.key === 'Enter') enviarMensaje(); });
-
+        // 3. ENVÍO Y RECEPCIÓN DE MENSAJES DEL CHAT
         function enviarMensaje() {
-            const text = inputMsg.value.trim();
-            if(text === '' || !currentUser) return;
+            const texto = chatInputField.value.trim();
+            if (!texto || !userLogueado) return;
 
-            push(ref(db, 'chat'), {
-                name: currentUser.displayName,
-                text: text,
+            push(ref(db, 'live_chat'), {
+                uid: userLogueado.uid,
+                username: userLogueado.displayName || "Usuario Anónimo",
+                message: texto,
                 timestamp: Date.now()
             });
-            inputMsg.value = '';
+
+            chatInputField.value = '';
         }
 
-        // Escuchar nuevos mensajes del chat
-        onValue(ref(db, 'chat'), (snapshot) => {
-            chatMessages.innerHTML = '';
+        btnSendMessage.addEventListener('click', enviarMensaje);
+        chatInputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') enviarMensaje();
+        });
+
+        onValue(ref(db, 'live_chat'), (snapshot) => {
+            chatMessagesBox.innerHTML = '';
             snapshot.forEach((childSnapshot) => {
-                const msg = childSnapshot.val();
-                const p = document.createElement('p');
-                p.innerHTML = `<strong>${msg.name}:</strong> ${msg.text}`;
-                chatMessages.appendChild(p);
+                const msgData = childSnapshot.val();
+                
+                const messageEl = document.createElement('div');
+                messageEl.className = 'chat-message';
+                
+                const usernameEl = document.createElement('span');
+                usernameEl.className = 'username';
+                usernameEl.textContent = msgData.username;
+
+                const textEl = document.createTextNode(msgData.message);
+
+                messageEl.appendChild(usernameEl);
+                messageEl.appendChild(textEl);
+                chatMessagesBox.appendChild(messageEl);
             });
-            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll al final
+            chatMessagesBox.scrollTop = chatMessagesBox.scrollHeight;
         });
     </script>
 </body>
 </html>
-
