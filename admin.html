@@ -156,7 +156,7 @@
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // CONFIGURACIÓN DE TU FIREBASE (Usa tus mismos datos)
+        // CONFIGURACIÓN DE TU FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
@@ -185,37 +185,51 @@
         const btnSaveConfig = document.getElementById('btn-save-config');
         const successAlert = document.getElementById('success-alert');
 
-        // RESTRICCIÓN: Introduce AQUÍ el correo que vas a usar como administrador
-        const EMAIL_ADMINISTRADOR = "tu_correo_admin@dominio.com";
+        // =========================================================================
+        // ⚠️ ATENCIÓN: COLOCA TU CORREO DE ADMINISTRADOR AQUÍ ABAJO EN MINÚSCULAS
+        // =========================================================================
+        const EMAIL_ADMINISTRADOR = "jonathandeleonc@gmail.com";
 
-        // 1. COMPROBAR SI EL USUARIO ESTÁ LOGUEADO Y ES EL ADMIN
+        // 1. CONTROL DE SESIÓN AUTOMÁTICO
         onAuthStateChanged(auth, (user) => {
-            if (user && user.email === EMAIL_ADMINISTRADOR) {
-                // Es el administrador verificado, mostrar panel y ocultar login
+            if (user && user.email.toLowerCase() === EMAIL_ADMINISTRADOR.trim().toLowerCase()) {
                 sectionLogin.classList.add('hidden');
                 sectionPanel.classList.remove('hidden');
                 cargarDatosPanel();
             } else {
-                // No está logueado o no es el admin, forzar vista de login
                 sectionLogin.classList.remove('hidden');
                 sectionPanel.classList.add('hidden');
             }
         });
 
-        // 2. EJECUTAR INICIO DE SESIÓN
+        // 2. EJECUTAR INICIO DE SESIÓN CON VALIDADOR MEJORADO
         btnLoginSubmit.addEventListener('click', () => {
-            const email = loginEmail.value.trim();
-            const password = loginPassword.value;
+            const emailInput = loginEmail.value.trim().toLowerCase();
+            const passwordInput = loginPassword.value;
+            
+            const emailAdminConfigurado = EMAIL_ADMINISTRADOR.trim().toLowerCase();
 
-            if(email !== EMAIL_ADMINISTRADOR) {
-                alert("Este correo no tiene permisos de administrador.");
+            // Comprobación exacta sin importar mayúsculas/minúsculas o espacios accidentales
+            if (emailInput !== emailAdminConfigurado) {
+                alert("ERROR: El correo ingresado [" + emailInput + "] no coincide con el administrador configurado en el código [" + emailAdminConfigurado + "].");
                 return;
             }
 
-            signInWithEmailAndPassword(auth, email, password)
+            // Petición de login a Firebase
+            signInWithEmailAndPassword(auth, emailInput, passwordInput)
+                .then((userCredential) => {
+                    console.log("¡Logueado con éxito!", userCredential.user);
+                })
                 .catch((error) => {
-                    console.error(error);
-                    alert("Clave incorrecta o error de acceso: " + error.message);
+                    console.error("Error Firebase:", error);
+                    
+                    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        alert("Contraseña incorrecta. Verifica tu clave.");
+                    } else if (error.code === 'auth/operation-not-allowed') {
+                        alert("ERROR: Activa el método de 'Correo electrónico/contraseña' en Authentication -> Sign-in method de Firebase.");
+                    } else {
+                        alert("Error de autenticación: " + error.message);
+                    }
                 });
         });
 
@@ -224,7 +238,7 @@
             signOut(auth);
         });
 
-        // 4. FUNCIONES PROPIAS DEL PANEL (SOLO CORREN SI ESTÁ LOGUEADO)
+        // 4. FUNCIONES PROPIAS DEL PANEL
         function cargarDatosPanel() {
             onValue(ref(db, 'live_config'), (snapshot) => {
                 const data = snapshot.val();
