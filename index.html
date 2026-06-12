@@ -76,12 +76,14 @@
             color: var(--text-muted);
         }
 
-        .sidebar-content img {
-            max-width: 100%;
+        /* Fuerza a que cualquier iframe de Facebook o anuncio lateral sea responsivo */
+        .sidebar-content iframe, .sidebar-content img {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 100% !important;
             height: auto;
+            display: block;
             border-radius: 8px;
-            margin-top: 10px;
-            border: 1px solid var(--border-color);
         }
 
         .center-content {
@@ -115,14 +117,26 @@
             border-radius: 12px;
             border: 1px solid var(--border-color);
             padding: 20px;
-            height: 380px;
+            height: 410px;
             display: flex;
             flex-direction: column;
         }
 
         .chat-container h2 {
             font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        /* DISEÑO DE CONTADORES */
+        .stats-banner {
+            background: var(--surface-accent);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
             margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
         }
 
         .chat-messages {
@@ -148,7 +162,7 @@
             margin-right: 5px;
         }
 
-        /* DISEÑO FORMULARIO ACCESO CHAT */
+        /* ACCESO CHAT LOCAL */
         .chat-auth-box {
             display: flex;
             flex-direction: column;
@@ -175,13 +189,6 @@
 
         .chat-auth-box button {
             flex: 1;
-        }
-
-        .chat-auth-box .toggle-text {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            cursor: pointer;
-            text-decoration: underline;
         }
 
         .chat-input-area {
@@ -237,7 +244,7 @@
     <div class="main-layout">
         <aside class="sidebar">
             <h2>Noticias</h2>
-            <div class="sidebar-content" id="news-left-container">Cargando últimas noticias...</div>
+            <div class="sidebar-content" id="news-left-container">Cargando contenido lateral...</div>
         </aside>
 
         <div class="center-content">
@@ -248,10 +255,15 @@
             <div class="chat-container">
                 <h2>Chat en Vivo</h2>
                 
+                <div class="stats-banner">
+                    <div>🟢 En línea: <strong id="count-online" style="color: #2ecc71;">0</strong></div>
+                    <div>📊 Visitas totales: <strong id="count-total" style="color: #3498db;">0</strong></div>
+                </div>
+                
                 <div id="chat-auth" class="chat-auth-box">
-                    <p id="auth-title">Inicia sesión para chatear</p>
+                    <p>Inicia sesión con tu apodo para chatear</p>
                     <input type="text" id="auth-username" placeholder="Nombre de usuario">
-                    <input type="password" id="auth-password" placeholder="Contraseña">
+                    <input type="password" id="auth-password" placeholder="Contraseña (mín. 6 letras)">
                     
                     <div class="row-btns">
                         <button class="btn" id="btn-login">Ingresar</button>
@@ -271,16 +283,18 @@
 
         <aside class="sidebar">
             <h2>Destacados</h2>
-            <div class="sidebar-content" id="news-right-container">Cargando contenido destacado...</div>
+            <div class="sidebar-content" id="news-right-container">Cargando contenido lateral...</div>
         </aside>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, push, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, push, onDisconnect, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // CONFIGURACIÓN DE TU FIREBASE
+        // =========================================================================
+        // ⚠️ PEGA AQUÍ LAS CREDENCIALES DE TU PROYECTO DE FIREBASE
+        // =========================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
@@ -310,24 +324,45 @@
         const chatMessagesBox = document.getElementById('chat-messages-box');
         const chatInputField = document.getElementById('chat-input-field');
         const btnSendMessage = document.getElementById('btn-send-message');
+        
+        const txtOnline = document.getElementById('count-online');
+        const txtTotal = document.getElementById('count-total');
 
         let usuarioActual = null;
 
-        // 1. SINCRONIZACIÓN EN TIEMPO REAL DEL REPRODUCTOR Y PANELES
+        // 1. SINCRONIZACIÓN EN TIEMPO REAL DEL REPRODUCTOR Y CONTENIDOS HTML
         onValue(ref(db, 'live_config'), (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 if (data.streamUrl) streamPlayer.src = data.streamUrl;
-                newsLeftContainer.innerHTML = data.newsLeft || "No hay noticias.";
-                newsRightContainer.innerHTML = data.newsRight || "No hay contenido.";
+                newsLeftContainer.innerHTML = data.newsLeft || "No hay contenidos.";
+                newsRightContainer.innerHTML = data.newsRight || "No hay contenidos.";
             }
         });
 
-        // Ocultar/Mostrar chat basado en si Firebase Auth detecta sesión activa
+        // 2. SISTEMA DE CONTADORES EN TIEMPO REAL (PRESENCIA)
+        const onlineRef = ref(db, 'usuarios_online');
+        const totalRef = ref(db, 'visitas_totales');
+        const connectedRef = ref(db, '.info/connected');
+
+        onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                // Sumar usuario en línea activo
+                runTransaction(onlineRef, (val) => (val || 0) + 1);
+                // Sumar al histórico global acumulado
+                runTransaction(totalRef, (val) => (val || 0) + 1);
+                // Programar resta automática al salir de la web
+                onDisconnect(onlineRef).runTransaction((val) => (val ? val - 1 : 0));
+            }
+        });
+
+        onValue(onlineRef, (snap) => { txtOnline.textContent = snap.val() || 0; });
+        onValue(totalRef, (snap) => { txtTotal.textContent = snap.val() || 0; });
+
+        // 3. CONTROL DE ESTADO DEL CHAT
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Al usar cuentas simuladas con email, usamos el displayName como apodo
-                usuarioActual = user.displayName || "Usuario";
+                usuarioActual = user.displayName || localStorage.getItem('chat_alias') || "Usuario";
                 chatAuth.classList.add('hidden');
                 chatActive.classList.remove('hidden');
             } else {
@@ -337,47 +372,42 @@
             }
         });
 
-        // 2. SISTEMA DE REGISTRO LOCAL (Crea cuentas simulando Nombre de Usuario)
+        // 4. REGISTRO LOCAL SIMULADO
         btnRegister.addEventListener('click', () => {
             const username = authUsername.value.trim().toLowerCase();
             const password = authPassword.value;
+            const originalAlias = authUsername.value.trim();
 
             if (username.length < 3 || password.length < 6) {
-                alert("El usuario debe tener mínimo 3 letras y la contraseña mínimo 6 caracteres.");
+                alert("El usuario requiere mín. 3 letras y la clave mín. 6 caracteres.");
                 return;
             }
 
-            // Para no complicar la interfaz pidiendo un correo real, el sistema crea un correo técnico
-            // invisible en base al apodo que elijan. Ejemplo: pedro -> pedro@chatlocal.com
             const emailSimulado = `${username}@chatlocal.com`;
 
-            // Verificar primero si el usuario ya existe para dar un error limpio
             createUserWithEmailAndPassword(auth, emailSimulado, password)
-                .then((userCredential) => {
-                    // Guardamos el nombre real con mayúsculas/minúsculas para el chat
-                    const user = userCredential.user;
-                    // Firebase necesita asignar el display name de esta manera
-                    // Para simplificar, usamos una función de actualización nativa en el chat tras el envío o lo registramos directamente.
-                    alert("¡Cuenta creada con éxito! Ya puedes escribir en el chat.");
-                    // Guardamos el apodo original escrito por el usuario
-                    usuarioActual = authUsername.value.trim();
+                .then(() => {
+                    localStorage.setItem('chat_alias', originalAlias);
+                    usuarioActual = originalAlias;
+                    alert("¡Cuenta creada! Ya puedes participar en el chat.");
                 })
                 .catch((error) => {
                     if (error.code === 'auth/email-already-in-use') {
-                        alert("Este nombre de usuario ya está registrado por otra persona.");
+                        alert("Este nombre de usuario ya está ocupado.");
                     } else {
-                        alert("Error al registrar: " + error.message);
+                        alert("Error: " + error.message);
                     }
                 });
         });
 
-        // 3. SISTEMA DE INICIO DE SESIÓN LOCAL
+        // 5. LOGIN LOCAL SIMULADO
         btnLogin.addEventListener('click', () => {
             const username = authUsername.value.trim().toLowerCase();
             const password = authPassword.value;
+            const originalAlias = authUsername.value.trim();
 
             if (!username || !password) {
-                alert("Por favor rellena ambos campos.");
+                alert("Rellena todos los campos.");
                 return;
             }
 
@@ -385,15 +415,15 @@
 
             signInWithEmailAndPassword(auth, emailSimulado, password)
                 .then(() => {
-                    // Guardamos el apodo original de forma visible
-                    usuarioActual = authUsername.value.trim();
+                    localStorage.setItem('chat_alias', originalAlias);
+                    usuarioActual = originalAlias;
                 })
-                .catch((error) => {
+                .catch(() => {
                     alert("Usuario o contraseña incorrectos.");
                 });
         });
 
-        // 4. ENVÍO Y RECEPCIÓN DE MENSAJES
+        // 6. ENVÍO Y RENDERIZADO DE CHAT
         function enviarMensaje() {
             const texto = chatInputField.value.trim();
             if (!texto || !usuarioActual) return;
@@ -403,21 +433,16 @@
                 message: texto,
                 timestamp: Date.now()
             });
-
             chatInputField.value = '';
         }
 
         btnSendMessage.addEventListener('click', enviarMensaje);
-        chatInputField.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') enviarMensaje();
-        });
+        chatInputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') enviarMensaje(); });
 
-        // Escuchar la base de datos para pintar los mensajes en pantalla
         onValue(ref(db, 'live_chat'), (snapshot) => {
             chatMessagesBox.innerHTML = '';
             snapshot.forEach((childSnapshot) => {
                 const msgData = childSnapshot.val();
-                
                 const messageEl = document.createElement('div');
                 messageEl.className = 'chat-message';
                 
@@ -426,7 +451,6 @@
                 usernameEl.textContent = msgData.username + ":";
 
                 const textEl = document.createTextNode(" " + msgData.message);
-
                 messageEl.appendChild(usernameEl);
                 messageEl.appendChild(textEl);
                 chatMessagesBox.appendChild(messageEl);

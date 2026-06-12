@@ -102,6 +102,32 @@
             display: none;
         }
 
+        /* CONTADORES EN PANEL */
+        .dashboard-metrics {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .metric-card {
+            flex: 1;
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-card span {
+            font-size: 0.85rem;
+            color: #4a5568;
+            font-weight: 600;
+            display: block;
+        }
+
+        .metric-card strong {
+            font-size: 2rem;
+        }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -126,8 +152,19 @@
     <div id="section-panel" class="admin-box hidden">
         <button class="btn-submit btn-logout" id="btn-logout">Cerrar Sesión</button>
         <h1>Panel de Control de Streaming</h1>
-        <p class="subtitle">Gestiona la señal de video y los bloques de contenidos laterales en tiempo real.</p>
+        <p class="subtitle">Gestiona tu señal e inyecta bloques dinámicos.</p>
         
+        <div class="dashboard-metrics">
+            <div class="metric-card">
+                <span>USUARIOS EN LÍNEA</span>
+                <strong id="admin-online" style="color: #2f855a;">0</strong>
+            </div>
+            <div class="metric-card">
+                <span>RECUENTO TOTAL DE VISITAS</span>
+                <strong id="admin-total" style="color: #2b6cb0;">0</strong>
+            </div>
+        </div>
+
         <div class="alert-success" id="success-alert">
             ¡Página principal actualizada correctamente en tiempo real!
         </div>
@@ -135,17 +172,17 @@
         <div class="form-group">
             <label for="input-stream-url">Dirección URL de Incrustación (Embed Stream URL)</label>
             <input type="text" id="input-stream-url" placeholder="Ej: https://www.youtube.com/embed/LIVE_VIDEO_ID">
-            <p class="help-text">Inserta solo la URL directa que va dentro del 'src' del iframe.</p>
+            <p class="help-text">Coloca solo el enlace directo 'src' del reproductor oficial de YouTube, Twitch o Facebook.</p>
         </div>
 
         <div class="form-group">
-            <label for="input-news-left">Noticias (Bloque Lateral Izquierdo) - Soporta HTML</label>
-            <textarea id="input-news-left" placeholder="Contenido izquierdo..."></textarea>
+            <label for="input-news-left">Noticias (Bloque Lateral Izquierdo) - Soporta HTML o Muro Facebook</label>
+            <textarea id="input-news-left" placeholder="Pega códigos <iframe> de Facebook o textos HTML..."></textarea>
         </div>
 
         <div class="form-group">
             <label for="input-news-right">Fotografías o Destacados (Bloque Lateral Derecho) - Soporta HTML</label>
-            <textarea id="input-news-right" placeholder="Contenido derecho..."></textarea>
+            <textarea id="input-news-right" placeholder="Pega imágenes o banners..."></textarea>
         </div>
 
         <button class="btn-submit" id="btn-save-config">Actualizar Cambios en Vivo</button>
@@ -156,7 +193,9 @@
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // CONFIGURACIÓN DE TU FIREBASE
+        // =========================================================================
+        // ⚠️ DEBEN SER LAS MISMAS CREDENCIALES EXACTAS DE TU INDEX.HTML
+        // =========================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyB0JWN4bRHZ8f2tZEQwnxBW8hGmP9XPaEA",
             authDomain: "calcos-6760b.firebaseapp.com",
@@ -186,11 +225,11 @@
         const successAlert = document.getElementById('success-alert');
 
         // =========================================================================
-        // ⚠️ ATENCIÓN: COLOCA TU CORREO DE ADMINISTRADOR AQUÍ ABAJO EN MINÚSCULAS
+        // ⚠️ ATENCIÓN: ESCRIBE AQUÍ TU CORREO DE ADMINISTRACIÓN EN MINÚSCULAS
         // =========================================================================
         const EMAIL_ADMINISTRADOR = "jonathandeleonc@gmail.com";
 
-        // 1. CONTROL DE SESIÓN AUTOMÁTICO
+        // 1. ESCUCHADOR GLOBAL DE CONTROL DE SESIÓN
         onAuthStateChanged(auth, (user) => {
             if (user && user.email.toLowerCase() === EMAIL_ADMINISTRADOR.trim().toLowerCase()) {
                 sectionLogin.classList.add('hidden');
@@ -202,44 +241,35 @@
             }
         });
 
-        // 2. EJECUTAR INICIO DE SESIÓN CON VALIDADOR MEJORADO
+        // 2. LOGUEAR ADMINISTRADOR (IGNORA MAYÚSCULAS)
         btnLoginSubmit.addEventListener('click', () => {
             const emailInput = loginEmail.value.trim().toLowerCase();
             const passwordInput = loginPassword.value;
-            
             const emailAdminConfigurado = EMAIL_ADMINISTRADOR.trim().toLowerCase();
 
-            // Comprobación exacta sin importar mayúsculas/minúsculas o espacios accidentales
             if (emailInput !== emailAdminConfigurado) {
-                alert("ERROR: El correo ingresado [" + emailInput + "] no coincide con el administrador configurado en el código [" + emailAdminConfigurado + "].");
+                alert("ERROR: El correo ingresado no coincide con el administrador configurado.");
                 return;
             }
 
-            // Petición de login a Firebase
             signInWithEmailAndPassword(auth, emailInput, passwordInput)
-                .then((userCredential) => {
-                    console.log("¡Logueado con éxito!", userCredential.user);
-                })
                 .catch((error) => {
-                    console.error("Error Firebase:", error);
-                    
                     if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                        alert("Contraseña incorrecta. Verifica tu clave.");
+                        alert("Contraseña incorrecta. Verifica tus datos.");
                     } else if (error.code === 'auth/operation-not-allowed') {
-                        alert("ERROR: Activa el método de 'Correo electrónico/contraseña' en Authentication -> Sign-in method de Firebase.");
+                        alert("ERROR: Activa el proveedor de Correo/Contraseña en la sección Authentication de Firebase.");
                     } else {
-                        alert("Error de autenticación: " + error.message);
+                        alert("Error: " + error.message);
                     }
                 });
         });
 
-        // 3. CERRAR SESIÓN
-        btnLogout.addEventListener('click', () => {
-            signOut(auth);
-        });
+        // 3. LOGOUT
+        btnLogout.addEventListener('click', () => { signOut(auth); });
 
-        // 4. FUNCIONES PROPIAS DEL PANEL
+        // 4. LEER Y ESCRIBIR DATOS DE STREAMING Y MÉTRICAS DE PRESENCIA
         function cargarDatosPanel() {
+            // Cargar textos actuales
             onValue(ref(db, 'live_config'), (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
@@ -248,24 +278,32 @@
                     inputNewsRight.value = data.newsRight || '';
                 }
             });
+
+            // Conectar métricas en vivo en el dashboard del administrador
+            const adminOnlineTxt = document.getElementById('admin-online');
+            const adminTotalTxt = document.getElementById('admin-total');
+
+            onValue(ref(db, 'usuarios_online'), (snapshot) => {
+                adminOnlineTxt.textContent = snapshot.val() || 0;
+            });
+
+            onValue(ref(db, 'visitas_totales'), (snapshot) => {
+                adminTotalTxt.textContent = snapshot.val() || 0;
+            });
         }
 
         btnSaveConfig.addEventListener('click', () => {
-            const url = inputStreamUrl.value.trim();
-            const left = inputNewsLeft.value.trim();
-            const right = inputNewsRight.value.trim();
-
             set(ref(db, 'live_config'), {
-                streamUrl: url,
-                newsLeft: left,
-                newsRight: right
+                streamUrl: inputStreamUrl.value.trim(),
+                newsLeft: inputNewsLeft.value.trim(),
+                newsRight: inputNewsRight.value.trim()
             })
             .then(() => {
                 successAlert.style.display = 'block';
                 setTimeout(() => { successAlert.style.display = 'none'; }, 4000);
             })
             .catch((error) => {
-                alert("Error al guardar cambios: " + error.message);
+                alert("Error de permisos en la base de datos: " + error.message);
             });
         });
     </script>
