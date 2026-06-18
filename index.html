@@ -341,42 +341,24 @@
         });
 
       // =========================================================================
-// 2. SISTEMA DE CONTADORES EN TIEMPO REAL (PRESENCIA CORREGIDO)
-// =========================================================================
-import { onDisconnect, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+// 2. SISTEMA DE CONTADORES EN TIEMPO REAL (PRESENCIA)
+        const onlineRef = ref(db, 'usuarios_online');
+        const totalRef = ref(db, 'visitas_totales');
+        const connectedRef = ref(db, '.info/connected');
 
-const onlineRef = ref(db, 'usuarios_online');
-const totalRef = ref(db, 'visitas_totales');
-const connectedRef = ref(db, '.info/connected');
-
-onValue(connectedRef, (snap) => {
-    if (snap.val() === true) {
-        // 1. Sumar +1 al contador de usuarios en línea actual
-        runTransaction(onlineRef, (currentValue) => {
-            return (currentValue || 0) + 1;
+        onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                // Sumar usuario en línea activo
+                runTransaction(onlineRef, (val) => (val || 0) + 1);
+                // Sumar al histórico global acumulado
+                runTransaction(totalRef, (val) => (val || 0) + 1);
+                // Programar resta automática al salir de la web
+                onDisconnect(onlineRef).runTransaction((val) => (val ? val - 1 : 0));
+            }
         });
 
-        // 2. Sumar +1 al histórico acumulado total de visitas
-        runTransaction(totalRef, (currentValue) => {
-            return (currentValue || 0) + 1;
-        });
-
-        // 3. Programar la RESTA OBLIGATORIA al cerrar o perder conexión.
-        // Usamos un 'set' directo en la desconexión para evitar que la transacción falle de forma externa.
-        onDisconnect(onlineRef).runTransaction((currentValue) => {
-            if (currentValue === null) return 0;
-            return currentValue > 1 ? currentValue - 1 : 0;
-        });
-    }
-});
-
-// Pintar los resultados en las etiquetas correspondientes de la pantalla
-onValue(onlineRef, (snap) => { 
-    txtOnline.textContent = snap.val() !== null ? snap.val() : 0; 
-});
-onValue(totalRef, (snap) => { 
-    txtTotal.textContent = snap.val() !== null ? snap.val() : 0; 
-});
+        onValue(onlineRef, (snap) => { txtOnline.textContent = snap.val() || 0; });
+        onValue(totalRef, (snap) => { txtTotal.textContent = snap.val() || 0; });
 
         // 3. CONTROL DE ESTADO DEL CHAT
         onAuthStateChanged(auth, (user) => {
